@@ -133,4 +133,4 @@ dmypy.json
 
 # security
 /media/*
-security.py
+secrets.py
