@@ -134,4 +134,4 @@ dmypy.json
 # security
 /media/*
 secrets.py
-restart.sh
+reload.sh
