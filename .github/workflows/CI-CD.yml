@@ -1,4 +1,4 @@
-name: cicd
+name: CI/CD
 
 on:
   push:
@@ -19,15 +19,14 @@ jobs:
         rm -r .git
     
     - name: Scp Transfer # 传输 Django 项目源码
-      uses: appleboy/scp-action@master
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
-        source: "./"
-        target: "${{ secrets.SCP_TARGET }}"
-        rm: true
+        script: |
+          cd ${{ secrets.SCP_TARGET }} && git pull
         
     - name: SSH Run # 运行部署脚本
       uses: appleboy/ssh-action@master
