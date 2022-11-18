@@ -19,14 +19,14 @@ jobs:
         rm -r .git
     
     - name: Scp Transfer # 传输 Django 项目源码
-      uses: appleboy/ssh-action@master
+      uses: horochx/deploy-via-scp@master
       with:
+        local: "."
+        remote: ${{ secrets.SCP_TARGET }}
         host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
-        script: |
-          cd ${{ secrets.SCP_TARGET }} && git pull
+        user: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         
     - name: SSH Run # 运行部署脚本
       uses: appleboy/ssh-action@master
