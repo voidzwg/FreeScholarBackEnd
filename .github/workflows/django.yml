@@ -28,13 +28,3 @@ jobs:
     - name: Run Tests
       run: |
         python manage.py test
-
-  deploy:
-
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: pull and reload on host
-        run: |
-          sshpass -p ${{secrets.ECS_PASSWORD}} ssh -o StrictHostKeyChecking=no root@${{secrets.ECS_IP}} "cd /root/FreeScholar/FreeScholarBackEnd; git pull --force; git checkout main; ./reload.sh;"

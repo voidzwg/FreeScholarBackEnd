@@ -1,0 +1,40 @@
+name: cicd
+
+on:
+  push:
+    tags:
+    - v*
+
+jobs:
+  cicd:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    - name: Setup # 删除 .git，以免将其传输至服务器
+      run: |
+        cd ${{github.workspace}}
+        rm -r .git
+    
+    - name: Scp Transfer # 传输 Django 项目源码
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        source: "./"
+        target: "${{ secrets.SCP_TARGET }}"
+        rm: true
+        
+    - name: SSH Run # 运行部署脚本
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          sh ${{ secrets.RUN_SCRIPT }} -i ${{ secrets.DOCKER_NAMESPACE }}/${{ secrets.DOCKER_IMAGE }} -t ${{ github.ref_name }} -w ${{ secrets.SCP_TARGET }}
