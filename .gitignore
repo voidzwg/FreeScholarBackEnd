@@ -134,4 +134,3 @@ dmypy.json
 # security
 /media/*
 secrets.py
-start.sh
