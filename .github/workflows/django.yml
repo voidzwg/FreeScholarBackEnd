@@ -24,6 +24,7 @@ jobs:
 
     - name: set up secrets
       run: |
+        cd ${{github.workspace}}
         touch ../secrets.json
         echo "{ "HOST": ${{ secrets.HOST }}, "PORT": ${{ secrets.PORT }}, "NAME": ${{ secrets.NAME }}, "USER": ${{ secrets.USER }}, "PASSWORD": ${{ secrets.PASSWORD }}, "SECRET_KEY": ${{ secrets.SECRET_KEY }} }" > ../secrets.json
 
