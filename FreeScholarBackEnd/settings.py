@@ -23,7 +23,7 @@ SECRETS = json.load(json_file)
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c8#qmj4$92mj3^@f)y_3aap4^wd*0&vtklt$p_@9slsyn02y^c'
+SECRET_KEY = SECRETS.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
