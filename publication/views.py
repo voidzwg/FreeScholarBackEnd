@@ -17,10 +17,7 @@ def search(request):
             should ={
                     "bool":
                     {
-                        "must":
-                            [
-
-                            ]
+                        "must":[]
                     }
             }
             shoulds = []

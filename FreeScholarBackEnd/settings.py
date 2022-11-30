@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'publication',
-    'django_elasticsearch_dsl',
 ]
 
 MIDDLEWARE = [
