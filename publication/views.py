@@ -11,7 +11,8 @@ def search(request):
     if request.method == 'POST':
         try:
             para = eval(request.body)
-            page = para['page']
+            page = int(para['page'])
+            page = page - 1
             # output:dict数据
             list = para['condition']
             should ={}
@@ -109,7 +110,7 @@ def search(request):
                         "should":shoulds
                     }
                 },
-                "from":page-1,
+                "from":str(page),
                 "size":20
             }
             resp = client.search(index='paper',body=body)
