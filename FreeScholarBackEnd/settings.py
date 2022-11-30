@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'search',
+    'django_elasticsearch_dsl',
 ]
 
 MIDDLEWARE = [
@@ -144,3 +146,9 @@ CORS_ALLOW_METHODS = (
     'PUT',
     'VIEW',
 )
+
+ELASTICSEARCH_DSL={
+    'default': {
+        'hosts': 'http://139.9.134.209:9200'
+    },
+}
