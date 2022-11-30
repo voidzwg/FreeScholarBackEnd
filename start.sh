@@ -1,5 +1,9 @@
 #!/bin/bash
-python /var/www/html/backend/manage.py makemigrations
-python /var/www/html/backend/manage.py migrate
-uwsgi --ini /var/www/html/backend/uwsgi.ini
-python /var/www/html/backend/manage.py runserver 8001
+project=backend
+base=/var/www/html
+# project=FreeScholarBackEnd
+# base=/root/FreeScholar
+python $base/$project/manage.py makemigrations
+python $base/$project/manage.py migrate
+uwsgi --ini $base/$project/uwsgi.ini
+python $base/$project/manage.py runserver 0.0.0.0:8001
