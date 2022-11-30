@@ -4,3 +4,4 @@ mysqlclient==2.1.1
 django-cors-headers==3.13.0
 elasticsearch==7.17.7
 elasticsearch_dsl==7.4.0
+simplejson==3.18.0
