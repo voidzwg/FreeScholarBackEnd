@@ -7,19 +7,14 @@ from elasticsearch_dsl import Search,Q
 import sys,io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="gb18030")
 client = Elasticsearch('http://139.9.134.209:9200')
-
 def search(request):
     if request.method == 'POST':
         try:
-            condition= eval(request.body)
+            para = eval(request.body)
+            page = para['page']
             # output:dict数据
-            list = condition['condition']
-            should ={
-                    "bool":
-                    {
-                        "must":[]
-                    }
-            }
+            list = para['condition']
+            should ={}
             shoulds = []
             for i in list:
                 input = i['input']
@@ -32,34 +27,81 @@ def search(request):
                 else:
                     field = i['field']
                 if i['type'] == 'OR':
-                    shoulds.append(should)
-                    should ={
+                    if should:
+                        shoulds.append(should)
+                    if(i['field']) == 'year':
+                        should = {
                             "bool":
-                            {
-                                "must":
-                                    [
-                                        {
-                                            "match":{field:input}
-                                        }
-                                    ]
-                            }
-                    }
+                                {
+                                    "must":
+                                        [
+                                            {
+                                                "range": {
+                                                    "year":{
+                                                        "gte":i['input'][0],
+                                                        "lte":i['input'][1]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                }
+                        }
+                    else:
+                        should ={
+                                "bool":
+                                {
+                                    "must":
+                                        [
+                                            {
+                                                "match":{field:input}
+                                            }
+                                        ]
+                                }
+                        }
                     shoulds.append(should)
                 elif i['type'] == 'AND':
-                    match ={"match":{field:input}}
+                    if (i['field']) == 'year':
+                        match = {
+                            "range": {
+                                "year": {
+                                    "gte": i['input'][0],
+                                    "lte": i['input'][1]
+                                }
+                            }
+                        }
+                    else:
+                        match ={"match":{field:input}}
                     should['bool']['must'].append(match)
                 elif i['type'] == 'NOR':
-                    match = {
-                        "bool":
-                            {
-                                "must_not":
-                                    [
-                                        {
-                                            "match": {field: input}
-                                        }
-                                    ]
-                            }
-                    }
+                    if (i['field']) == 'year':
+                        match= {
+                            "bool":
+                                {
+                                    "must_not":
+                                        [
+                                            {
+                                                "range": {
+                                                    "year": {
+                                                        "gte": i['input'][0],
+                                                        "lte": i['input'][1]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                }
+                        }
+                    else:
+                        match = {
+                            "bool":
+                                {
+                                    "must_not":
+                                        [
+                                            {
+                                                "match": {field: input}
+                                            }
+                                        ]
+                                }
+                        }
                     should['bool']['must'].append(match)
             body={
                 "query":{
@@ -67,7 +109,7 @@ def search(request):
                         "should":shoulds
                     }
                 },
-                "from":0,
+                "from":page-1,
                 "size":20
             }
             resp = client.search(index='paper',body=body)
