@@ -41,13 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-    'user'
-=======
-    'publication',
-    'user',
-    'ScholarPortal',
->>>>>>> c1064abb802c1e9d19d2709bfea60cc8bf7d1241
+    'relation'
 ]
 
 MIDDLEWARE = [
