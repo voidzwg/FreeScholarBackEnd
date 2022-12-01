@@ -1,6 +1,7 @@
 
 
 # publish/views.py
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from relation.models import User, Scholar, Follow, Comment, Like1
@@ -112,5 +113,18 @@ def getFollowers(request):
                        'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data,safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+@csrf_exempt
+def unFocus(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')  # 获取请求数据
+        aim_id = request.POST.get('aim_id')
+        try:
+            Follow.objects.get(scholar_id=aim_id, user_id=user_id).delete()
+        except Follow.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "删除失败"})
+        return JsonResponse({'errno': 0, 'msg': "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})

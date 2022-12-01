@@ -7,4 +7,5 @@ urlpatterns = [
     path('getBaseInfo', getBaseInfo),
     path('getFollows', getFollows),
     path('getFollowers', getFollowers),
+    path('unFocus', unFocus),
 ]
