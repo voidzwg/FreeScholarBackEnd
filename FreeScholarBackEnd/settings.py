@@ -41,7 +41,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
     'user'
+=======
+    'publication',
+    'user',
+    'ScholarPortal',
+>>>>>>> c1064abb802c1e9d19d2709bfea60cc8bf7d1241
 ]
 
 MIDDLEWARE = [
@@ -144,7 +150,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('*', )
 
 CORS_ORIGIN_WHITELIST = (
-    'http://127.0.0.1:8000',
+    '*',
 )
 
 CORS_ALLOW_METHODS = (
@@ -156,3 +162,9 @@ CORS_ALLOW_METHODS = (
     'PUT',
     'VIEW',
 )
+
+ELASTICSEARCH_DSL={
+    'default': {
+        'hosts': 'http://139.9.134.209:9200'
+    },
+}

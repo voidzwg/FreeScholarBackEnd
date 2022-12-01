@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+<<<<<<< HEAD
 from django.urls import path, include
 from django.views import static
 
@@ -22,4 +23,13 @@ from FreeScholarBackEnd import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/user/', include(('user.urls', 'user'), namespace="user")),
+=======
+from django.urls import path,include,re_path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/publication/',include('publication.urls')),
+    path('api/user/',include('user.urls')),
+    path('api/ScholarPortal/', include('ScholarPortal.urls')),
+>>>>>>> c1064abb802c1e9d19d2709bfea60cc8bf7d1241
 ]
