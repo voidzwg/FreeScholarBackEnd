@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/publication/',include('publication.urls')),
     path('api/user/',include('user.urls')),
     path('api/ScholarPortal/', include('ScholarPortal.urls')),
+    path('api/relation/', include('relation.urls')),
 ]

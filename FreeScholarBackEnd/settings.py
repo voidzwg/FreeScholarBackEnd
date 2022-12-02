@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'publication',
     'user',
     'ScholarPortal',
+    'relation',
 ]
 
 MIDDLEWARE = [
