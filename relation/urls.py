@@ -8,4 +8,9 @@ urlpatterns = [
     path('getFollows', getFollows),
     path('getFollowers', getFollowers),
     path('unFocus', unFocus),
+    path('getUser', getUser),
+    path('setNormal', setNormal),
+    path('setMute', setMute),
+    path('setBan', setBan),
+    path('getNum', getNum),
 ]

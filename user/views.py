@@ -114,6 +114,8 @@ def getFollowers(request):
             data1 = {'id': user_id, 'username': u_name, 'bio': bio,
                        'time': users[i].create_time}
             data.append(data1)
-        return JsonResponse(data,safe=False)
+        return JsonResponse(data, safe=False)
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
