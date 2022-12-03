@@ -164,10 +164,10 @@ ELASTICSEARCH_DSL = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://139.9.134.209:6379/1",
+        "LOCATION": SECRETS.get("LOCALTION"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": "free-scholar-14"
+            "PASSWORD": SECRETS.get("PASSWORD")
         },
     }
 }
