@@ -2,9 +2,11 @@
 
 # publish/views.py
 import simplejson
+import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from relation.models import User, Scholar, Follow, Comment, Like1
+from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
+    Complaincomment, Complainpaper
 
 
 @csrf_exempt
@@ -135,6 +137,42 @@ def unFocus(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
+def focus(request):
+    if request.method == 'POST':
+        req = simplejson.loads(request.body)
+        user_id = req['user_id']  # 获取请求数据
+        aim_id = req['aim_id']
+        try:
+            Follow.objects.get(scholar_id=aim_id, user_id=user_id)
+        except Follow.DoesNotExist:
+            curr_time = datetime.datetime.now()
+            time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+            follow = Follow(scholar_id=aim_id, user_id=user_id, create_time=time_str)
+            follow.save()
+            return JsonResponse({'errno': 0, 'msg': "success"})
+        return JsonResponse({'errno': 1, 'msg': "已经关注该学者"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def like(request):
+    if request.method == 'POST':
+        req = simplejson.loads(request.body)
+        user_id = req['user_id']  # 获取请求数据
+        aim_id = req['aim_id']
+        try:
+            Like1.objects.get(comment_id=aim_id, user_id=user_id)
+        except Like1.DoesNotExist:
+            curr_time = datetime.datetime.now()
+            time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+            obj = Like1(comment_id=aim_id, user_id=user_id, create_time=time_str)
+            obj.save()
+            return JsonResponse({'errno': 0, 'msg': "success"})
+        return JsonResponse({'errno': 1, 'msg': "已经点赞该条评论"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
 @csrf_exempt
 def getUser(request):
     if request.method == 'GET':
@@ -204,7 +242,6 @@ def setBan(request):
 @csrf_exempt
 def getNum(request):
     if request.method == 'GET':
-        data = []
         try:
             user = len(User.objects.all())
         except User.DoesNotExist:
@@ -218,5 +255,34 @@ def getNum(request):
         except Scholar.DoesNotExist:
             scholar = 0
         return JsonResponse({'userNum': user, 'scholarNum': scholar, 'adminNum': admin})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getUserItem(request):
+    if request.method == 'GET':
+        try:
+            num = len(Complaincomment.objects.filter(status=0))
+        except Complaincomment.DoesNotExist:
+            num = 0
+        return JsonResponse({'num': num})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getScholarItem(request):
+    if request.method == 'GET':
+        try:
+            num1 = len(Complainpaper.objects.filter(status=0))
+        except Complainpaper.DoesNotExist:
+            num1 = 0
+        try:
+            num2 = len(Complainauthor.objects.filter(status=0))
+        except Complainauthor.DoesNotExist:
+            num2 = 0
+        num = num1+num2
+        return JsonResponse({'num': num})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
