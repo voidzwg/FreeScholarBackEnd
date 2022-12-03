@@ -1,7 +1,7 @@
 
 
 # publish/views.py
-
+import simplejson
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from relation.models import User, Scholar, Follow, Comment, Like1
@@ -10,12 +10,11 @@ from relation.models import User, Scholar, Follow, Comment, Like1
 @csrf_exempt
 def test(request):
     if request.method == 'GET':
-        user_id = request.GET.get("id", None)
         try:
-            user = User.objects.get(field_id=user_id)
-        except User.DoesNotExist:
-            return JsonResponse({'errno': 1, 'msg': "用户不存在"})
-        return JsonResponse({'errno': 0, 'id': user_id, 'name': user.name})
+            follow = Follow.objects.all()
+        except Follow.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "删除失败"})
+        return JsonResponse({'errno': len(follow)})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -123,12 +122,14 @@ def getFollowers(request):
 @csrf_exempt
 def unFocus(request):
     if request.method == 'POST':
-        user_id = request.POST.get('user_id')  # 获取请求数据
-        aim_id = request.POST.get('aim_id')
+        req = simplejson.loads(request.body)
+        user_id = req['user_id']  # 获取请求数据
+        aim_id = req['aim_id']
         try:
-            Follow.objects.get(scholar_id=aim_id, user_id=user_id).delete()
+            follow = Follow.objects.get(scholar_id=aim_id, user_id=user_id)
         except Follow.DoesNotExist:
             return JsonResponse({'errno': 1, 'msg': "删除失败"})
+        follow.delete()
         return JsonResponse({'errno': 0, 'msg': "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -155,7 +156,8 @@ def getUser(request):
 @csrf_exempt
 def setNormal(request):
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -170,7 +172,8 @@ def setNormal(request):
 @csrf_exempt
 def setMute(request):
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -185,7 +188,8 @@ def setMute(request):
 @csrf_exempt
 def setBan(request):
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
