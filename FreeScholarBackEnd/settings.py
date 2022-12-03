@@ -41,13 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-    'user'
-=======
     'publication',
     'user',
     'ScholarPortal',
->>>>>>> c1064abb802c1e9d19d2709bfea60cc8bf7d1241
 ]
 
 MIDDLEWARE = [
@@ -168,3 +164,15 @@ ELASTICSEARCH_DSL={
         'hosts': 'http://139.9.134.209:9200'
     },
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://139.9.134.209:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "free-scholar-14"
+        },
+    }
+}
+
