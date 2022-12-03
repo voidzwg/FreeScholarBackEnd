@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'ScholarPortal',
     'relation',
     'searchList',
+    'MessageCenter',
 ]
 
 MIDDLEWARE = [

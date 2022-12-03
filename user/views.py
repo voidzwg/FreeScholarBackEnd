@@ -23,6 +23,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from user.models import User, Scholar, Follow, Comment, Like1
 
+SUPERUSER = [6]
+
 token_expire = 60*60*1
 r = get_redis_connection()
 
