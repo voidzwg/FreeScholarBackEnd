@@ -18,7 +18,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 json_file = open("../secrets.json")
 SECRETS = json.load(json_file)
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
@@ -29,7 +28,6 @@ SECRET_KEY = SECRETS.get("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -44,6 +42,8 @@ INSTALLED_APPS = [
     'publication',
     'user',
     'ScholarPortal',
+    'relation',
+    'searchList',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'FreeScholarBackEnd.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
@@ -95,7 +94,6 @@ DATABASES = {
         }
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -115,7 +113,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -126,7 +123,6 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
@@ -143,7 +139,7 @@ CORS_ALLOW_CREDENTIALS = True
 # 添加允许执行跨站点请求的主机，为True，则将不使用白名单，并且将接受所有来源
 CORS_ORIGIN_ALLOW_ALL = True
 # 允许所有的请求头
-CORS_ALLOW_HEADERS = ('*', )
+CORS_ALLOW_HEADERS = ('*',)
 
 CORS_ORIGIN_WHITELIST = (
     '*',
@@ -159,7 +155,7 @@ CORS_ALLOW_METHODS = (
     'VIEW',
 )
 
-ELASTICSEARCH_DSL={
+ELASTICSEARCH_DSL = {
     'default': {
         'hosts': 'http://139.9.134.209:9200'
     },

@@ -20,9 +20,12 @@ from django.views import static
 from FreeScholarBackEnd import settings
 from django.urls import path,include,re_path
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/publication/',include('publication.urls')),
-    path('api/user/',include('user.urls')),
+    path('api/publication/', include('publication.urls')),
+    path('api/user/', include('user.urls')),
     path('api/ScholarPortal/', include('ScholarPortal.urls')),
+    path('api/relation/', include('relation.urls')),
+    path('api/searchList/', include('searchList.urls')),
 ]
