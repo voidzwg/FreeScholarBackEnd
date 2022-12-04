@@ -8,7 +8,7 @@ from FreeScholarBackEnd.settings import SECRETS
 
 class Authentication:
     redis_connection = get_redis_connection()
-    expire = 60 * 1 * 1
+    expire = 60 * 60 * 6
 
     @staticmethod
     def create_token(uid, admin=False):
