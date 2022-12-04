@@ -20,7 +20,7 @@ def message_serialize(message_list):
             'is_read': message.is_read
         }
         full_message_list.append(json_data)
-        if message.owner.field_id in SUPERUSER:
+        if message.sender.field_id in SUPERUSER:
             system_message_list.append(json_data)
         else:
             user_message_list.append(json_data)
