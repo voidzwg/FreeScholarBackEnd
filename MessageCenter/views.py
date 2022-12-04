@@ -6,15 +6,21 @@ from .models import Message, User
 from  user.views import SUPERUSER
 
 
-def message_serialize(message_list):
+def message_serialize(message_list, sender=True):
     system_message_list = []
     user_message_list = []
     full_message_list = []
     for message in message_list:
+        if sender:
+            user = message.sender
+        else:
+            user = message.owner
         json_data = {
             'mid': message.field_id,
             'owner_id': message.owner.field_id,
             'sender_id': message.sender.field_id,
+            'username': user.name,
+            'avatar': user.avatar,
             'content': message.content,
             'create_time': message.create_time,
             'is_read': message.is_read
@@ -51,7 +57,7 @@ class MessageCenter(View):
             except:
                 return JsonResponse({'errno': 1, 'msg': "sender不存在"})
             message_list = Message.objects.filter(sender=sender)
-            system_message_list, user_message_list, full_message_list = message_serialize(message_list)
+            system_message_list, user_message_list, full_message_list = message_serialize(message_list, sender=False)
             return JsonResponse(full_message_list, safe=False)
         else:
             return JsonResponse({'errno': 2, 'msg': "illegal get_type"})
