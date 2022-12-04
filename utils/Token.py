@@ -28,11 +28,15 @@ class Authentication:
         cls = Authentication
         fail_json_msg = {
             'errno': -1,
-            'msg': "token已失效，请重新登录"
+            'msg': "非法的token令牌"
         }
         fail_json_msg2 = {
             'errno': -2,
             'msg': "未收到token令牌"
+        }
+        fail_json_msg3 = {
+            'errno': -3,
+            'msg': "登录超时，请重新登录"
         }
         try:
             token = request_dict.get('HTTP_JWT')
@@ -41,6 +45,8 @@ class Authentication:
         payload = cls.verify_jwt_token(token)
         if payload is None:
             return True, fail_json_msg
+        elif int(payload.get('exp')) > int(time.time()):
+            return True, fail_json_msg3
         else:
             token_in_redis = cls.redis_connection.get(payload.get('id'))
             if token_in_redis is None or token != token_in_redis.decode():
@@ -65,6 +71,4 @@ class Authentication:
             payload = jwt.decode(token, SECRETS.get('JWT_SECRET'), algorithms=[SECRETS.get('JWT_ALGORITHM')])
         except jwt.PyJWTError:
             return None
-        if int(payload.get('exp')) > int(time.time()):
-            return payload
-        return None
+        return payload
