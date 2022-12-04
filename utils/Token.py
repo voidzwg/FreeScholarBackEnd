@@ -38,14 +38,16 @@ class Authentication:
             'errno': -3,
             'msg': "登录超时，请重新登录"
         }
-        try:
-            token = request_dict.get('HTTP_JWT')
-        except KeyError:
+        token = request_dict.get('HTTP_JWT', None)
+        if token is None or token == "":
             return True, fail_json_msg2
         payload = cls.verify_jwt_token(token)
+        print(payload)
+        print(int(time.time()))
+
         if payload is None:
             return True, fail_json_msg
-        elif int(payload.get('exp')) > int(time.time()):
+        elif int(payload.get('exp')) < int(time.time()):
             return True, fail_json_msg3
         else:
             token_in_redis = cls.redis_connection.get(payload.get('id'))
