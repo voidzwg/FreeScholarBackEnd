@@ -8,9 +8,13 @@ urlpatterns = [
     path('getFollows', getFollows),
     path('getFollowers', getFollowers),
     path('unFocus', unFocus),
+    path('focus', focus),
+    path('like', like),
     path('getUser', getUser),
     path('setNormal', setNormal),
     path('setMute', setMute),
     path('setBan', setBan),
     path('getNum', getNum),
+    path('getUserItem', getUserItem),
+    path('getScholarItem', getScholarItem),
 ]
