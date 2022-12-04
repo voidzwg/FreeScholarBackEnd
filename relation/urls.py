@@ -17,4 +17,6 @@ urlpatterns = [
     path('getNum', getNum),
     path('getUserItem', getUserItem),
     path('getScholarItem', getScholarItem),
+    path('editInfo', editInfo),
+    path('changePwd', changePwd),
 ]
