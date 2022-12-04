@@ -286,3 +286,49 @@ def getScholarItem(request):
         return JsonResponse({'num': num})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def editInfo(request):
+    if request.method == 'POST':
+        req = simplejson.loads(request.body)
+        user_id = req['id']
+        name = req['name']
+        mail = req['mail']
+        birthday = req['birthday']
+        gender = req['gender']
+        bio = req['bio']
+        try:
+            user = User.objects.get(field_id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+        user.name = name
+        user.mail = mail
+        user.birthday = birthday
+        user.gender = gender
+        user.bio = bio
+        user.save()
+        return JsonResponse({'errno': 0, "msg": "success"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def changePwd(request):
+    if request.method == 'POST':
+        req = simplejson.loads(request.body)
+        user_id = req['id']
+        password_old = req['password_old']
+        password1 = req['password1']
+        password2 = req['password2']
+        try:
+            user = User.objects.get(field_id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+        if password_old != user.pwd:
+            return JsonResponse({'errno': 1, 'msg': "密码错误"})
+        if password1 != password2:
+            return JsonResponse({'errno': 1, 'msg': "两次密码不一致"})
+        user.pwd = password1
+        user.save()
+        return JsonResponse({'errno': 0, "msg": "success"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
