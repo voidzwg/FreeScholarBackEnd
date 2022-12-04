@@ -114,6 +114,7 @@ def login(request):
                 'profile': user.bio,
                 'avator': user.avatar,
                 'token': token,
+                'getToken':gettoekn
             }
             return JsonResponse(userInfo)
         else:
