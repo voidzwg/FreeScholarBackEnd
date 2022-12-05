@@ -230,7 +230,7 @@ class User(models.Model):
         #     return True
         # else:
         #     return False
-        pattern = re.compile(r'[\w\.]*@[a-zA-Z0-9]+\.[com|.gov|.net]')
+        pattern = re.compile(r'[\w\.]*@[a-zA-Z0-9]+\.[com|.gov|.net]')  # FIXME: 正则表达式写错了
         result = pattern.match(self.mail)
         if result:
             return True

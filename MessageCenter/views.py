@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.generic import View
 
 from .models import Message, User
-from  user.views import SUPERUSER
+from utils.superuser import SUPERUSER
 
 
 def message_serialize(message_list, sender=True):
