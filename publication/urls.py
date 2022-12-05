@@ -3,4 +3,10 @@ from django.urls import path, include,re_path
 from . import views
 urlpatterns = [
     path('search/', views.publication.search),
+    path('GetWord/', views.publication.GetWord),
+    path('HotPaper/', views.publication.HotPaper),
+    path('HotWord/', views.publication.HotWord),
+    path('LikePaper/', views.publication.LikePaper),
+    path('ReadPaper/', views.publication.ReadPaper),
+    path('CollectPaper/', views.publication.CollectPaper),
 ]

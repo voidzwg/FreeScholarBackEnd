@@ -126,40 +126,43 @@ def getBaseInfo(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    counts = 0
+    # counts = 0
     try:
-        user = User.objects.get(field_id=payload.get('id'))
-        user_id = user.field_id  # FIXME: payload中已经有uid了
+        user_id = payload.get('id')
+        user = User.objects.get(field_id=user_id)
     except User.DoesNotExist:
         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
     bio = user.bio
+    avatar=user.avatar
     u_name = user.name
-    try:
-        scholar = Scholar.objects.get(user_id=user_id)
-    except Scholar.DoesNotExist:
-        return JsonResponse({'errno': 1, 'msg': "该用户不是学者"})  # FIXME: 可以让后面的followers为0，没必要返回错误信息
-    affi = scholar.affi
     try:
         user_count = len(Follow.objects.filter(user_id=user_id))
     except Follow.DoesNotExist:
         user_count = 0
     try:
+        scholar = Scholar.objects.get(user_id=user_id)
+    except Scholar.DoesNotExist:
+        return JsonResponse(
+            {'username': u_name, 'avator': avatar, 'institution': None, 'bio': bio, 'follows': user_count
+                , 'followers': 0})
+    affi = scholar.affi
+    try:
         scholar_count = len(Follow.objects.filter(scholar_id=user_id))  # FIXME
     except Follow.DoesNotExist:
         scholar_count = 0
-    try:
-        likes = Comment.objects.filter(user_id=user_id)  # FIXME: 可以和ysa交流一下，用户似乎是没有获赞数的
-    except Comment.DoesNotExist:
-        counts = 0
-        likes = None
-    for i in range(len(likes)):  # FIXME: 额外开销，可以直接 for like in likes，Comment表里存了点赞数据
-        c_id = likes[i]._id
-        try:
-            counts += len(Like1.objects.filter(user_id=c_id))
-        except Like1.DoesNotExist:
-            counts += 0
-    return JsonResponse({'username': u_name, 'institution': affi, 'bio': bio, 'follows': user_count
-                            , 'followers': scholar_count, 'likes': counts})  # FIXME: avatar
+    # try:
+    #     likes = Comment.objects.filter(user_id=user_id)  # FIXME: 可以和ysa交流一下，用户似乎是没有获赞数的
+    # except Comment.DoesNotExist:
+    #     counts = 0
+    #     likes = None
+    # for like in likes:  # FIXME: 额外开销，可以直接 for like in likes，Comment表里存了点赞数据
+    #     c_id = like._id
+    #     try:
+    #         counts += len(Like1.objects.filter(user_id=c_id))
+    #     except Like1.DoesNotExist:
+    #         counts += 0
+    return JsonResponse({'username': u_name, 'avator':avatar,'institution': affi, 'bio': bio, 'follows': user_count
+                            , 'followers': scholar_count})  # FIXME: avatar
 
 
 @csrf_exempt
@@ -171,15 +174,15 @@ def getFollows(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user = User.objects.get(field_id=payload.get('id'))
-    user_id = user.field_id  # FIXME: 相关问题同上
+    user_id = payload.get('id')
+    user = User.objects.get(field_id=user_id)
     data = []
     try:
         users = Follow.objects.filter(user_id=user_id)
     except Follow.DoesNotExist:
         return JsonResponse(data)
-    for i in range(len(users)):  # FIXME: for user in users
-        scholar_id = users[i].scholar_id  # FIXME: scholar_id = user.scholar.field_id
+    for user in users:  # FIXME: for user in users
+        scholar_id = user.scholar.scholar_id  # FIXME: scholar_id = user.scholar.field_id
         try:
             scholar = Scholar.objects.get(field_id=scholar_id)
         except Scholar.DoesNotExist:
@@ -193,7 +196,7 @@ def getFollows(request):
         bio = user.bio
         u_name = user.name
         data1 = {'id': user_id, 'institution': affi, 'username': u_name, 'bio': bio,
-                 'time': users[i].create_time}
+                 'time': user.create_time}
         data.append(data1)
     return JsonResponse(data, safe=False)
 
