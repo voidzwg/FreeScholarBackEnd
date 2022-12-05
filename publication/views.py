@@ -21,6 +21,8 @@ class publication:
                 shoulds = []
                 for i in list:
                     input = i['input']
+                    if not input:
+                        continue
                     if i['field'] == 'author':
                         field = i['field'] + 's.name'
                     elif i['field'] == 'venue':
@@ -106,14 +108,50 @@ class publication:
                                     }
                             }
                         should['bool']['must'].append(match)
+                filter = para['filter']
+                filters = []
+                for f in filter:
+                    type = 'term'
+                    field = f['field']
+                    if f['field'] == 'venue':
+                        field = f['field'] + '.raw'
+                    elif f['field'] == 'org':
+                        field = 'authors' + '.org'
+                        type = 'match_phrase'
+                    elif f['field'] == 'year':
+                        type = 'range'
+                    elif f['field'] == 'keyword':
+                        field = 'keywords'
+                    if f['field'] != 'org':
+                        field = field+'.keyword'
+                    if f['field'] == 'year':
+                        fq = {
+                            type: {
+                                "year": {
+                                        "gte": f['value'][0],
+                                        "lte": f['value'][1]
+                                }
+                            }
+                        }
+                    else:
+                        fq = {
+                            type:{
+                                field:f['value']
+                            }
+                        }
+                    filters.append(fq)
+
                 body={
                     "query":{
                         "function_score": {
                             "query":{
                                 "bool": {
-                                    "should":shoulds
-                                }
+                                    "should": shoulds,
+                                    "filter": filters
+                                },
+
                             },
+
                             "functions":[
                                 {"field_value_factor": {
                                 "field": "n_citation",
@@ -133,19 +171,89 @@ class publication:
                                                 }
                                             }
                                      }
-                                }
+                                },
 
                             ],
-                            "boost_mode": "multiply"
+                            "boost_mode": "multiply",
+
                         },
+
+
+
                     },
+
                         "from":str(page),
                         "size":20,
-
+                        "min_score":5
                 }
                 resp = client.search(index='paper',body=body)
-                return JsonResponse(resp['hits'],safe=False)
+                return JsonResponse(resp['hits'])
             except Exception as e:
                 traceback.print_exc()
         else:
             return JsonResponse({'errno':'1'})
+
+    def search_by_id_list(idList):
+        body = {
+            "query": {
+                "terms": {
+                    "id": idList
+                }
+            }
+        }
+        resp = client.search(index='paper', body=body)
+        hits = resp['hits']['hits']
+        return hits
+    def getVenueListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                vlist = []
+                hits = publication.search_by_id_list(idList)
+                for hit in hits:
+                    if 'venue' in hit['_source']:
+                        if 'raw' in hit['_source']['venue']:
+                            vlist.append(hit['_source']['venue']['raw'])
+                return JsonResponse({'data': vlist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
+    def getKeyListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                hits = publication.search_by_id_list(idList)
+                klist = []
+                for hit in hits:
+                    if 'keywords' in hit['_source']:
+                        for k in hit['_source']['keywords']:
+                            klist.append(k.strip())
+                return JsonResponse({'data': klist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
+    def getOrgListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                hits = publication.search_by_id_list(idList)
+                olist = []
+                for hit in hits:
+                    for a in hit['_source']['authors']:
+                        if('org' in a):
+                            list = a['org'].split(',')
+                            for i in list:
+                                if('University' in i or 'Université' in i or '大学' in i):
+                                    olist.append(i.strip())
+                return JsonResponse({'data':olist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
