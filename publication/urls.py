@@ -9,4 +9,7 @@ urlpatterns = [
     path('LikePaper/', views.publication.LikePaper),
     path('ReadPaper/', views.publication.ReadPaper),
     path('CollectPaper/', views.publication.CollectPaper),
+    path('getVenueListByIdList/',views.publication.getVenueListByIdList),
+    path('getKeyListByIdList/',views.publication.getKeyListByIdList),
+    path('getOrgListByIdList/',views.publication.getOrgListByIdList),
 ]
