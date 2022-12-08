@@ -1,19 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 import traceback
-# Create your views here.
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search, Q
 from utils.Token import Authentication
-from utils import Rating
-
 from publication.models import *
 from utils import Rating
-import sys, io
-from publication import *
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="gb18030")
-client = Elasticsearch('http://139.9.134.209:9200')
+from FreeScholarBackEnd.settings import *
 
 
 class publication:

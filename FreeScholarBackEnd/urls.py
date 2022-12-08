@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/relation/', include('relation.urls')),
     path('api/searchList/', include('searchList.urls')),
     path('api/MessageCenter/', include('MessageCenter.urls')),
+    path('api/author/', include('author.urls')),
 ]
