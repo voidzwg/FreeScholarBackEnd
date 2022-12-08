@@ -45,28 +45,45 @@ class author:
                     authors = []
                     for p in pubs:
                         for a in p['authors']:
-                            body = {
-                                "query": {
-                                    'bool':{
-                                        'must':[
-                                            {"term": {
-                                                "authors.id": id
-                                            }},
+                            flag = False
+                            for j in authors:
+                                if a['name'] == j['name']:
+                                    flag = True
+                                    break
+                            if flag:
+                                continue
+                            if 'id' in a:
+                                if a['id'] == id:
+                                    continue
+                                body = {
+                                    "query": {
+                                        'bool':{
+                                            'must':[
+                                                {"term": {
+                                                    "authors.id": id
+                                                }},
 
-                                            {"term": {
-                                                "authors.id": a['id']
-                                            }}
-                                        ]
+                                                {"term": {
+                                                    "authors.id": a['id']
+                                                }}
+                                            ]
+                                        }
                                     }
                                 }
-                            }
-                            count = client.count(index='paper',body=body)
-                            item = {
-                                'id':a['id'],
-                                'name':a['name'],
-                                'count':count['count']
-                            }
-                            authors.append(item)
+                                count = client.count(index='paper',body=body)
+                                item = {
+                                    'id':a['id'],
+                                    'name':a['name'],
+                                    'count':count['count']
+                                }
+                                authors.append(item)
+                            else:
+                                if a['name'] == data['name']:
+                                    continue
+                                item = {
+                                    'name': a['name'],
+                                }
+                                authors.append(item)
                     return JsonResponse({'data':data,'coworkers':authors})
 
                 else:
