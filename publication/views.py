@@ -150,21 +150,31 @@ class publication:
                     if f['field'] != 'org':
                         field = field + '.keyword'
                     if f['field'] == 'year':
-                        fq = {
-                            type: {
+                        match = {
+                            "range": {
                                 "year": {
                                     "gte": f['value'][0],
                                     "lte": f['value'][1]
                                 }
                             }
                         }
+                        for s in shoulds:
+                            s['bool']['must'].append(match)
+                    elif f['field'] == 'lang':
+                        match = {
+                            "term": {
+                                "lang": f['value']
+                            }
+                        }
+                        for s in shoulds:
+                            s['bool']['must'].append(match)
                     else:
                         fq = {
                             type: {
                                 field: f['value']
                             }
                         }
-                    filters.append(fq)
+                        filters.append(fq)
 
                 body = {
                     "query": {
@@ -172,7 +182,7 @@ class publication:
                             "query": {
                                 "bool": {
                                     "should": shoulds,
-                                    "filter": filters
+                                    "filter": filters,
                                 },
 
                             },
@@ -347,7 +357,9 @@ class publication:
                 for hit in hits:
                     if 'venue' in hit['_source']:
                         if 'raw' in hit['_source']['venue']:
-                            vlist.append(hit['_source']['venue']['raw'])
+                            v = hit['_source']['venue']['raw'].strip()
+                            if not (v in vlist):
+                                vlist.append(v)
                 return JsonResponse({'data': vlist})
             else:
                 return JsonResponse({'errno': '1'})
@@ -364,7 +376,9 @@ class publication:
                 for hit in hits:
                     if 'keywords' in hit['_source']:
                         for k in hit['_source']['keywords']:
-                            klist.append(k.strip())
+                            k = k.strip()
+                            if not (k in klist):
+                                klist.append(k)
                 return JsonResponse({'data': klist})
             else:
                 return JsonResponse({'errno': '1'})
@@ -384,7 +398,9 @@ class publication:
                             list = a['org'].split(',')
                             for i in list:
                                 if('University' in i or 'Université' in i or '大学' in i):
-                                    olist.append(i.strip())
+                                    i = i.strip()
+                                    if not (i in olist):
+                                        olist.append(i)
                 return JsonResponse({'data':olist})
             else:
                 return JsonResponse({'errno': '1'})
