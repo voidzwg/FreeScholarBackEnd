@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
     Complaincomment, Complainpaper
+from utils.Token import Authentication
 
 
 @csrf_exempt
@@ -24,7 +25,10 @@ def test(request):
 @csrf_exempt
 def getBaseInfo(request):
     if request.method == 'GET':
-        user_id = request.GET['user_id']  # 获取请求数据
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         counts = 0
         try:
             user = User.objects.get(field_id=user_id)
@@ -33,6 +37,12 @@ def getBaseInfo(request):
         bio = user.bio
         u_name = user.name
         avatar = user.avatar
+        mail = user.mail
+        birthday = user.birthday
+        identity = user.identity
+        state = user.state
+        gender = user.gender
+        login_date = user.login_date
         try:
             scholar = Scholar.objects.get(user_id=user_id)
         except Scholar.DoesNotExist:
@@ -52,13 +62,15 @@ def getBaseInfo(request):
             counts = 0
             likes = None
         for i in range(len(likes)):
-            c_id = likes[i]._id
+            c_id = likes[i].field_id
             try:
                 counts += len(Like1.objects.filter(user_id=c_id))
             except Like1.DoesNotExist:
                 counts += 0
         return JsonResponse({'username': u_name, 'avatar': avatar, 'institution': affi, 'bio': bio,
-                             'follows': user_count, 'followers': scholar_count, 'likes': counts})
+                             'follows': user_count, 'followers': scholar_count, 'likes': counts
+                             , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
+                                , 'gender': gender, 'login_date': login_date})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -66,7 +78,10 @@ def getBaseInfo(request):
 @csrf_exempt
 def getFollows(request):
     if request.method == 'GET':
-        user_id = request.GET['user_id']  # 获取请求数据
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         data = []
         try:
             users = Follow.objects.filter(user_id=user_id)
@@ -87,8 +102,8 @@ def getFollows(request):
             bio = user.bio
             u_name = user.name
             avatar = user.avatar
-            data1 = {'id': user_id, 'institution': affi, 'username': u_name, 'avatar': avatar, 'bio': bio,
-                       'time': users[i].create_time}
+            data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
+                , 'avatar': avatar, 'bio': bio,'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -98,7 +113,10 @@ def getFollows(request):
 @csrf_exempt
 def getFollowers(request):
     if request.method == 'GET':
-        user_id = request.GET['user_id']  # 获取请求数据
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         data = []
         try:
             users = Follow.objects.filter(scholar_id=user_id)
@@ -124,8 +142,11 @@ def getFollowers(request):
 @csrf_exempt
 def unFocus(request):
     if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         req = simplejson.loads(request.body)
-        user_id = req['user_id']  # 获取请求数据
         aim_id = req['aim_id']
         try:
             follow = Follow.objects.get(scholar_id=aim_id, user_id=user_id)
@@ -139,8 +160,11 @@ def unFocus(request):
 
 def focus(request):
     if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         req = simplejson.loads(request.body)
-        user_id = req['user_id']  # 获取请求数据
         aim_id = req['aim_id']
         try:
             Follow.objects.get(scholar_id=aim_id, user_id=user_id)
@@ -157,8 +181,11 @@ def focus(request):
 
 def like(request):
     if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         req = simplejson.loads(request.body)
-        user_id = req['user_id']  # 获取请求数据
         aim_id = req['aim_id']
         try:
             Like1.objects.get(comment_id=aim_id, user_id=user_id)
@@ -194,8 +221,10 @@ def getUser(request):
 @csrf_exempt
 def setNormal(request):
     if request.method == 'POST':
-        req = simplejson.loads(request.body)
-        user_id = req['_id']
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -210,8 +239,10 @@ def setNormal(request):
 @csrf_exempt
 def setMute(request):
     if request.method == 'POST':
-        req = simplejson.loads(request.body)
-        user_id = req['_id']
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -226,8 +257,10 @@ def setMute(request):
 @csrf_exempt
 def setBan(request):
     if request.method == 'POST':
-        req = simplejson.loads(request.body)
-        user_id = req['_id']
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -290,8 +323,11 @@ def getScholarItem(request):
 
 def editInfo(request):
     if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         req = simplejson.loads(request.body)
-        user_id = req['id']
         name = req['name']
         mail = req['mail']
         birthday = req['birthday']
@@ -314,8 +350,11 @@ def editInfo(request):
 
 def changePwd(request):
     if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
         req = simplejson.loads(request.body)
-        user_id = req['id']
         password_old = req['password_old']
         password1 = req['password1']
         password2 = req['password2']

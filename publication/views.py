@@ -1,14 +1,39 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 import traceback
-# Create your views here.
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search,Q
-import sys,io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="gb18030")
-client = Elasticsearch('http://139.9.134.209:9200')
+from utils.Token import Authentication
+from publication.models import *
+from utils import Rating
+from FreeScholarBackEnd.settings import *
+
 
 class publication:
+
+    def GetWord(request):
+        if request.method == 'POST':
+            try:
+                para = eval(request.body)
+                list = para['condition']
+                for i in list:
+                    word=i['input']
+                    field = Field.objects.filter(name=word).first()
+                    if field is None:
+                        field = Field()
+                        field.name=i['input']
+                        field.type=i['field']
+                        field.count = 1
+                        field.save()
+                        field.SavingRatingWord()
+                    else:
+                        field.count+=1
+                        field.save()
+                        field.SavingRatingWord()
+                return JsonResponse({'message': "成功"})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'errno': '1'})
+
     def search(request):
         if request.method == 'POST':
             try:
@@ -17,10 +42,12 @@ class publication:
                 page = page - 1
                 # output:dict数据
                 list = para['condition']
-                should ={}
+                should = {}
                 shoulds = []
                 for i in list:
                     input = i['input']
+                    if not input:
+                        continue
                     if i['field'] == 'author':
                         field = i['field'] + 's.name'
                     elif i['field'] == 'venue':
@@ -32,7 +59,7 @@ class publication:
                     if i['type'] == 'OR':
                         if should:
                             shoulds.append(should)
-                        if(i['field']) == 'year':
+                        if (i['field']) == 'year':
                             should = {
                                 "bool":
                                     {
@@ -40,9 +67,9 @@ class publication:
                                             [
                                                 {
                                                     "range": {
-                                                        "year":{
-                                                            "gte":i['input'][0],
-                                                            "lte":i['input'][1]
+                                                        "year": {
+                                                            "gte": i['input'][0],
+                                                            "lte": i['input'][1]
                                                         }
                                                     }
                                                 }
@@ -50,13 +77,13 @@ class publication:
                                     }
                             }
                         else:
-                            should ={
-                                    "bool":
+                            should = {
+                                "bool":
                                     {
                                         "must":
                                             [
                                                 {
-                                                    "match":{field:input}
+                                                    "match": {field: input}
                                                 }
                                             ]
                                     }
@@ -73,11 +100,11 @@ class publication:
                                 }
                             }
                         else:
-                            match ={"match":{field:input}}
+                            match = {"match": {field: input}}
                         should['bool']['must'].append(match)
                     elif i['type'] == 'NOR':
                         if (i['field']) == 'year':
-                            match= {
+                            match = {
                                 "bool":
                                     {
                                         "must_not":
@@ -106,46 +133,277 @@ class publication:
                                     }
                             }
                         should['bool']['must'].append(match)
-                body={
-                    "query":{
-                        "function_score": {
-                            "query":{
-                                "bool": {
-                                    "should":shoulds
+                filter = para['filter']
+                filters = []
+                for f in filter:
+                    type = 'term'
+                    field = f['field']
+                    if f['field'] == 'venue':
+                        field = f['field'] + '.raw'
+                    elif f['field'] == 'org':
+                        field = 'authors' + '.org'
+                        type = 'match_phrase'
+                    elif f['field'] == 'year':
+                        type = 'range'
+                    elif f['field'] == 'keyword':
+                        field = 'keywords'
+                    if f['field'] != 'org':
+                        field = field + '.keyword'
+                    if f['field'] == 'year':
+                        match = {
+                            "range": {
+                                "year": {
+                                    "gte": f['value'][0],
+                                    "lte": f['value'][1]
                                 }
+                            }
+                        }
+                        for s in shoulds:
+                            s['bool']['must'].append(match)
+                    elif f['field'] == 'lang':
+                        match = {
+                            "term": {
+                                "lang": f['value']
+                            }
+                        }
+                        for s in shoulds:
+                            s['bool']['must'].append(match)
+                    else:
+                        fq = {
+                            type: {
+                                field: f['value']
+                            }
+                        }
+                        filters.append(fq)
+
+                body = {
+                    "query": {
+                        "function_score": {
+                            "query": {
+                                "bool": {
+                                    "should": shoulds,
+                                    "filter": filters,
+                                },
+
                             },
-                            "functions":[
+
+                            "functions": [
                                 {"field_value_factor": {
-                                "field": "n_citation",
-                                "modifier": "log1p",
-                                "factor": 0.1,
-                                "missing": 0,
-                            }},
+                                    "field": "n_citation",
+                                    "modifier": "log1p",
+                                    "factor": 0.1,
+                                    "missing": 0,
+                                }},
 
                                 {
-                                    "weight":0,
-                                    "filter":{
-                                            "bool": {
-                                                "must_not": {
-                                                    "exists": {
-                                                        "field": "abstract"
-                                                    }
+                                    "weight": 0,
+                                    "filter": {
+                                        "bool": {
+                                            "must_not": {
+                                                "exists": {
+                                                    "field": "abstract"
                                                 }
                                             }
-                                     }
-                                }
+                                        }
+                                    }
+                                },
 
                             ],
-                            "boost_mode": "multiply"
-                        },
-                    },
-                        "from":str(page),
-                        "size":20,
+                            "boost_mode": "multiply",
 
+                        },
+
+                    },
+
+                    "from": str(page),
+                    "size": 20,
+                    "min_score": 5
                 }
-                resp = client.search(index='paper',body=body)
-                return JsonResponse(resp['hits'],safe=False)
+                resp = client.search(index='paper', body=body)
+                return JsonResponse(resp['hits'])
             except Exception as e:
                 traceback.print_exc()
         else:
-            return JsonResponse({'errno':'1'})
+            return JsonResponse({'errno': '1'})
+    def HotPaper(request):
+        if request.method == 'POST':
+            try:
+                Top_paper = Rating.rating_connection.zrange('HotPaper', 0, 10, desc=True, withscores=True)
+                paper_data = []
+                for i in Top_paper:
+                    field_id = i[0].decode()
+                    paper=Paper.objects.get(field_id=field_id)
+                    paper_data.append({'paper_name': paper.paper_name})
+                result = {
+                    'paper': paper_data
+                }
+                return JsonResponse(result)
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def HotWord(request):
+        if request.method == 'POST':
+            try:
+                Top_paper = Rating.rating_connection.zrange('HotWord', 0, 10, desc=True, withscores=True)
+                word_data = []
+                for i in Top_paper:
+                    field_id = i[0].decode()
+                    field = Field.objects.get(field_id=field_id)
+                    word_data.append({'word_name': field.name})
+                result = {
+                    'paper': word_data
+                }
+                return JsonResponse(result)
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def ReadPaper(request):
+        if request.method == 'POST':
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                paper_name = data_body.get('paper_name')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                if paper is None:
+                    paper = Paper()
+                    paper.paper_id = paper_id
+                    paper.paper_name = paper_name
+                    paper.read_count = 1
+                    paper.like_count = 0
+                    paper.collect_count = 0
+                    paper.save_paper_data()
+                    paper.save()
+                else:
+                    paper.read_count += 1
+                    paper.save_paper_data()
+                    paper.save()
+                return JsonResponse({'message': "阅读成功"})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def LikePaper(request):
+        if request.method == 'POST':
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                if paper is None:
+                    return JsonResponse({'error': 0, 'message': "文章不存在"})
+                else:
+                    paper.like_count += 1
+                    paper.save_paper_data()
+                    paper.save()
+                return JsonResponse({'message': "点赞成功"})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def CollectPaper(request):
+        if request.method == 'POST':
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            try:
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                if paper is None:
+                    return JsonResponse({'error': 0, 'message': "文章不存在"})
+                else:
+                    paper.like_count += 1
+                    paper.save_paper_data()
+                    paper.save()
+                    collection = Collection()
+                    collection.paper_id = paper_id
+                    collection.user = user
+                    collection.save()
+                return JsonResponse({'message': "收藏成功"})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+
+    def search_by_id_list(idList):
+        body = {
+            "query": {
+                "terms": {
+                    "id": idList
+                }
+            }
+        }
+        resp = client.search(index='paper', body=body)
+        hits = resp['hits']['hits']
+        return hits
+    def getVenueListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                vlist = []
+                hits = publication.search_by_id_list(idList)
+                for hit in hits:
+                    if 'venue' in hit['_source']:
+                        if 'raw' in hit['_source']['venue']:
+                            v = hit['_source']['venue']['raw'].strip()
+                            if not (v in vlist):
+                                vlist.append(v)
+                return JsonResponse({'data': vlist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
+    def getKeyListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                hits = publication.search_by_id_list(idList)
+                klist = []
+                for hit in hits:
+                    if 'keywords' in hit['_source']:
+                        for k in hit['_source']['keywords']:
+                            k = k.strip()
+                            if not (k in klist):
+                                klist.append(k)
+                return JsonResponse({'data': klist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
+    def getOrgListByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                hits = publication.search_by_id_list(idList)
+                olist = []
+                for hit in hits:
+                    for a in hit['_source']['authors']:
+                        if('org' in a):
+                            list = a['org'].split(',')
+                            for i in list:
+                                if('University' in i or 'Université' in i or '大学' in i):
+                                    i = i.strip()
+                                    if not (i in olist):
+                                        olist.append(i)
+                return JsonResponse({'data':olist})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
