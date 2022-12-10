@@ -391,7 +391,7 @@ def set_avatar(request):
         except Exception as e:
             print(e)
             return JsonResponse({'errno': -3, 'msg': "用户不存在"})
-        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + uid + '_' + avatar.name
+        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(uid) + '_' + avatar.name
         try:
             user.avatar = avatar_name
             user.save()
