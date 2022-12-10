@@ -1,6 +1,8 @@
 
 
 # publish/views.py
+import os.path
+
 import simplejson
 import datetime
 from django.http import JsonResponse
@@ -8,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
     Complaincomment, Complainpaper
 from utils.Token import Authentication
+from django.conf import settings
 
 
 @csrf_exempt
@@ -371,3 +374,39 @@ def changePwd(request):
         return JsonResponse({'errno': 0, "msg": "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+IMAGE_TAIL = ('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff')
+DEFAULT_AVATAR = "default.png"
+AVATARS_URL = settings.MEDIA_URL + "avatars/"
+
+
+def set_avatar(request):
+    if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        uid = payload.get('id')
+        avatar = request.FILES.get('avatar')
+        if avatar is None or avatar == '':
+            return JsonResponse({'errno': -1, 'msg': "头像不能为空"})
+        if not avatar.name.lower().endswith(IMAGE_TAIL):
+            return JsonResponse({'errno': -2, 'msg': "文件格式错误"})
+        try:
+            user = User.objects.get(field_id=uid)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'errno': -3, 'msg': "用户不存在"})
+        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + avatar.name
+        try:
+            user.avatar = avatar_name
+            user.save()
+        except Exception as e:
+            print(e)
+            return JsonResponse({'errno': -4, 'msg': "未知错误"})
+        f = open(os.path.join(settings.MEDIA_ROOT, 'avatars', avatar_name), 'wb')
+        for i in avatar.chunks():
+            f.write(i)
+        f.close()
+        return JsonResponse({'errno': 0, 'msg': "上传成功"})
+    return JsonResponse({'errno': 1001, 'msg': "请求方式错误"})

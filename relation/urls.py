@@ -19,4 +19,5 @@ urlpatterns = [
     path('getScholarItem', getScholarItem),
     path('editInfo', editInfo),
     path('changePwd', changePwd),
+    path('set_avatar/', set_avatar),
 ]
