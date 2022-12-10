@@ -102,8 +102,8 @@ def getFollows(request):
             bio = user.bio
             u_name = user.name
             avatar = user.avatar
-            data1 = {'id': user_id, 'institution': affi, 'username': u_name, 'avatar': avatar, 'bio': bio,
-                       'time': users[i].create_time}
+            data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
+                , 'avatar': avatar, 'bio': bio,'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
