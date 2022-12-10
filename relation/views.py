@@ -1,5 +1,3 @@
-
-
 # publish/views.py
 import simplejson
 import datetime
@@ -88,7 +86,7 @@ def getFollows(request):
             u_name = user.name
             avatar = user.avatar
             data1 = {'id': user_id, 'institution': affi, 'username': u_name, 'avatar': avatar, 'bio': bio,
-                       'time': users[i].create_time}
+                     'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -114,7 +112,7 @@ def getFollowers(request):
             u_name = user.name
             avatar = user.avatar
             data1 = {'id': user_id, 'username': u_name, 'avatar': avatar, 'bio': bio,
-                       'time': users[i].create_time}
+                     'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -271,6 +269,53 @@ def getUserItem(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
+def getReportAll(request):
+    if request.method == 'GET':
+        try:
+            num1 = len(Complaincomment.objects.filter(status=1))
+        except Complaincomment.DoesNotExist:
+            num1 = 0
+        try:
+            num2 = len(Complainauthor.objects.filter(status=1))
+        except Complainauthor.DoesNotExist:
+            num2 = 0
+        num = num1 + num2
+        return JsonResponse({'num': num})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getComplainAll(request):
+    if request.method == 'GET':
+        try:
+            num = len(Complainpaper.objects.filter(status=1))
+        except Complainpaper.DoesNotExist:
+            num = 0
+        return JsonResponse({'num': num})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getRecentRecord(request):
+    if request.method == 'GET':
+        try:
+            Complainpaper.objects.all.order_by('-create_time')
+            Complaincomment.objects.all.order_by('-create_time')
+            Complainauthor.objects.all.order_by('-create_time')
+        except Complainpaper.DoesNotExist:
+            num1 = 0
+        try:
+            num2 = len(Complainauthor.objects.filter(status=0))
+        except Complainauthor.DoesNotExist:
+            num2 = 0
+        num = num1 + num2
+        return JsonResponse({'num': num})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
 @csrf_exempt
 def getScholarItem(request):
     if request.method == 'GET':
@@ -282,7 +327,7 @@ def getScholarItem(request):
             num2 = len(Complainauthor.objects.filter(status=0))
         except Complainauthor.DoesNotExist:
             num2 = 0
-        num = num1+num2
+        num = num1 + num2
         return JsonResponse({'num': num})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -295,6 +340,7 @@ def editInfo(request):
         name = req['name']
         mail = req['mail']
         birthday = req['birthday']
+        birth = datetime.date(*map(int, birthday.split('-')))
         gender = req['gender']
         bio = req['bio']
         try:
@@ -303,7 +349,7 @@ def editInfo(request):
             return JsonResponse({'errno': 1, 'msg': "用户不存在"})
         user.name = name
         user.mail = mail
-        user.birthday = birthday
+        user.birthday = birth
         user.gender = gender
         user.bio = bio
         user.save()

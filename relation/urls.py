@@ -19,4 +19,7 @@ urlpatterns = [
     path('getScholarItem', getScholarItem),
     path('editInfo', editInfo),
     path('changePwd', changePwd),
+    path('getReportAll',getReportAll),
+    path('getComplainAll',getComplainAll),
+    path('getRecentRecord',getRecentRecord),
 ]
