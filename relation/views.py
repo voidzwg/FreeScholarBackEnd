@@ -1,16 +1,15 @@
-
-
 # publish/views.py
+import datetime
 import os.path
 
 import simplejson
-import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
     Complaincomment, Complainpaper
 from utils.Token import Authentication
-from django.conf import settings
+from utils.media import *
 
 
 @csrf_exempt
@@ -374,11 +373,6 @@ def changePwd(request):
         return JsonResponse({'errno': 0, "msg": "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-
-
-IMAGE_TAIL = ('.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff')
-DEFAULT_AVATAR = "default.png"
-AVATARS_URL = settings.MEDIA_URL + "avatars/"
 
 
 def set_avatar(request):
