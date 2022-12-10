@@ -23,4 +23,3 @@ class PaperData(View):
         if has_login:
             json_data['user_collected'] = Collection.objects.filter(paper_id=pid, user_id=payload.get('id')).count() > 0
         return JsonResponse(json_data, safe=False)
-

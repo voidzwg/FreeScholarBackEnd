@@ -224,13 +224,8 @@ class User(models.Model):
         return False
 
     def validate_email(self):
-        # if type(self.mail) is not str:
-        #     return False
-        # if re.match("^.+@(\\[?)[a-zA-Z0-9\\-.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(]?)$", self.mail) is not None:
-        #     return True
-        # else:
-        #     return False
-        pattern = re.compile(r'[\w\.]*@[a-zA-Z0-9]+\.[com|.gov|.net]')  # FIXME: 正则表达式写错了
+        # pattern = re.compile(r'[\w\.]*@[a-zA-Z0-9]+\.[com|.gov|.net]')
+        pattern = re.compile(r'(^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$)')
         result = pattern.match(self.mail)
         if result:
             return True

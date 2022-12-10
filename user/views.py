@@ -82,7 +82,6 @@ def login(request):
         user_info = {
             'errno': 0,
             'name': user.name,
-            'password': user.pwd,
             'email': user.mail,
             'profile': user.bio,
             'avatar': user.avatar,
