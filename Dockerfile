@@ -3,7 +3,6 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' 
 RUN mkdir -p /var/www/html/backend
 COPY ./ /var/www/html/backend/
 WORKDIR /var/www/html/backend
-RUN mkdir /var/www/html/backend/media
 
 RUN pip install -i https://pypi.doubanio.com/simple uwsgi
 RUN pip install -i https://pypi.doubanio.com/simple/ -r requirements.txt
