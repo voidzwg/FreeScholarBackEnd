@@ -17,6 +17,7 @@ class Affiliation(models.Model):
     scholars = models.JSONField(blank=True, null=True)
     num_pubs_per_year = models.JSONField(blank=True, null=True)
     logo = models.TextField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -93,10 +94,24 @@ class Complainpaper(models.Model):
         db_table = 'ComplainPaper'
 
 
+class Favorites(models.Model):
+    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    title = models.CharField(max_length=255, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
+    count = models.IntegerField(blank=True, null=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Favorites'
+
+
 class Field(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     name = models.CharField(max_length=255, blank=True, null=True)
     count = models.IntegerField(blank=True, null=True)
+    type = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -170,6 +185,7 @@ class Scholar(models.Model):
     hot_index = models.IntegerField(blank=True, null=True)
     claim_time = models.DateTimeField(blank=True, null=True)
     author_id = models.TextField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
