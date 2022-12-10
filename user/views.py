@@ -5,8 +5,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django_redis import get_redis_connection
 
-from user.models import User, Scholar, Follow, Comment, Like1
+from user.models import User, Scholar, Follow
 from utils.Token import Authentication
+from utils.media import *
 
 token_expire = 60 * 60 * 1
 r = get_redis_connection()
@@ -19,7 +20,6 @@ def register(request):  # 继承请求类
     # 判断请求方式是否为 POST
     try:
         data_body = request.POST
-
         username = data_body.get('username')  # 获取请求体中的请求数据
         email = data_body.get('email')
         password_1 = data_body.get('password1')
@@ -59,6 +59,8 @@ def register(request):  # 继承请求类
             # 新建 Author 对象，赋值用户名和密码保存
 
         # id 是自动复制，不需要指明
+        # 设置头像为默认头像
+        new_user.avatar = DEFAULT_AVATAR
         new_user.save()
         return JsonResponse({'errno': 1, 'msg': "注册成功"})
     except Exception as e:
@@ -82,7 +84,6 @@ def login(request):
         user_info = {
             'errno': 0,
             'name': user.name,
-            'password': user.pwd,
             'email': user.mail,
             'profile': user.bio,
             'avatar': user.avatar,
