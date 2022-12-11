@@ -342,9 +342,9 @@ def getComplainAll(request):
 @csrf_exempt
 def getRecentRecord(request):
     if request.method == 'GET':
-        Complainpaper.objects.all.order_by('-create_time')
-        Complaincomment.objects.all.order_by('-create_time')
-        Complainauthor.objects.all.order_by('-create_time')
+        Complainpaper.objects.all.order_by('-audit_time')
+        Complaincomment.objects.all.order_by('-audit_time')
+        Complainauthor.objects.all.order_by('-audit_time')
         list1 = []
         list2 = []
         list3 = []
@@ -352,27 +352,67 @@ def getRecentRecord(request):
         dict = {}
         for complainpaper in Complainpaper.objects.all():
             if complainpaper.audit_time is not None:
-                dict[complainpaper.field_id] = complainpaper.audit_time
+                dict[complainpaper.audit_time] = complainpaper.field_id
             list1.append(complainpaper)
             count += 1
             if count > 5:
                 break
         for complaincomment in Complaincomment.objects.all():
             if complaincomment.audit_time is not None:
-                dict[complaincomment.field_id] = complaincomment.audit_time
+                dict[complaincomment.audit_time] = complaincomment.field_id
             list2.append(complaincomment)
             count += 1
             if count > 5:
                 break
         for complainauthor in Complainauthor.objects.all():
             if complainauthor.audit_time is not None:
-                dict[complainauthor.field_id] = complainauthor.audit_time
+                dict[complainauthor.audit_time] = complainauthor.field_id
             list3.append(complainauthor)
             count += 1
             if count > 5:
                 break
+        result = []
+        keys = list(dict.keys())
+        keys.sort(reverse=False)
+        for key in keys:
+            for i in list1:
+                if i.audit_time == key:
+                    if i.status == 0:
+                        type = 0
+                    else:
+                        type = 2
+                    tmp = {
+                        'type': type,
+                        'id': i.field_id
+                    }
+                    result.append(tmp)
+            for i in list2:
+                if i.audit_time == key:
+                    if i.status == 0:
+                        type = 1
+                    else:
+                        type = 3
+                    tmp = {
+                        'type': type,
+                        'id': i.field_id
+                    }
+                    result.append(tmp)
+            for i in list3:
+                if i.audit_time == key:
+                    if i.status == 0:
+                        type = 0
+                    else:
+                        type = 2
+                    tmp = {
+                        'type': type,
+                        'id': i.field_id
+                    }
+                    result.append(tmp)
+            count += 1
+            if count > 5:
+                break
 
-        return JsonResponse({})
+        return JsonResponse({'result': result})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
