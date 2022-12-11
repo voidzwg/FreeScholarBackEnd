@@ -24,6 +24,16 @@ class Affiliation(models.Model):
         db_table = 'Affiliation'
 
 
+class Collectfavorites(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    user_id = models.IntegerField(blank=True, null=True)
+    favorites_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'CollectFavorites'
+
+
 class Collection(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING)

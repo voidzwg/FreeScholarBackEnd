@@ -6,8 +6,7 @@ import simplejson
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
-    Complaincomment, Complainpaper, Affiliation, Favorites
+from relation.models import *
 from utils.Token import Authentication
 from utils.media import *
 
@@ -457,3 +456,48 @@ def set_avatar(request):
         return JsonResponse({'errno': 0, 'msg': "上传成功"})
     return JsonResponse({'errno': 1001, 'msg': "请求方式错误"})
 
+
+@csrf_exempt
+def getCollectFavorites(request):
+    if request.method == 'GET':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
+        data = []
+        try:
+            favorites = Collectfavorites.objects.filter(user_id=user_id)
+        except Collectfavorites.DoesNotExist:
+            return JsonResponse(data)
+        for i in range(len(favorites)):
+            _id = favorites[i].favorites_id
+            favorite = Favorites.objects.get(field_id=_id)
+            title = favorite.title
+            create_time = favorite.create_time
+            avatar = favorite.avatar
+            count = favorite.count
+            data1 = {'id': _id, 'title': title, 'avatar': avatar, 'count': count,
+                     'time': create_time}
+            data.append(data1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def collectFavorites(request):
+    if request.method == 'POST':
+        try:
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            user_id = payload.get('id')
+            req = simplejson.loads(request.body)
+            favorites_id = req['favorites_id']
+            favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
+            favorite.save()
+            return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
