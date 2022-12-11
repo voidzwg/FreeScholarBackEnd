@@ -72,9 +72,9 @@ def getBaseInfo(request):
         login_date = user.login_date
         try:
             scholar = Scholar.objects.get(user_id=user_id, status=2)
+            affi = scholar.affi
         except Scholar.DoesNotExist:
-            return JsonResponse({'errno': 1, 'msg': "该用户不是学者"})
-        affi = scholar.affi
+            affi = None
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
