@@ -19,5 +19,7 @@ urlpatterns = [
     path('getScholarItem', getScholarItem),
     path('editInfo', editInfo),
     path('changePwd', changePwd),
+    path('getFavorites', getFavorites),
+    path('newFavorites', newFavorites),
     path('set_avatar/', set_avatar),
 ]
