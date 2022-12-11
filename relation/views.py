@@ -1,11 +1,14 @@
 # publish/views.py
-import simplejson
 import datetime
+import traceback
+import os.path
+import simplejson
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from relation.models import User, Scholar, Follow, Comment, Like1, Complainauthor, \
-    Complaincomment, Complainpaper
+
+from relation.models import *
 from utils.Token import Authentication
+from utils.media import *
 
 
 @csrf_exempt
@@ -42,7 +45,7 @@ def getBaseInfo(request):
         gender = user.gender
         login_date = user.login_date
         try:
-            scholar = Scholar.objects.get(user_id=user_id)
+            scholar = Scholar.objects.get(user_id=user_id, status=1)
         except Scholar.DoesNotExist:
             return JsonResponse({'errno': 1, 'msg': "该用户不是学者"})
         affi = scholar.affi
@@ -88,7 +91,7 @@ def getFollows(request):
         for i in range(len(users)):
             scholar_id = users[i].scholar_id
             try:
-                scholar = Scholar.objects.get(field_id=scholar_id)
+                scholar = Scholar.objects.get(field_id=scholar_id, status=1)
             except Scholar.DoesNotExist:
                 continue
             user_id = scholar.user_id
@@ -283,7 +286,7 @@ def getNum(request):
         except User.DoesNotExist:
             admin = 0
         try:
-            scholar = len(Scholar.objects.all())
+            scholar = len(Scholar.objects.filter(status=1))
         except Scholar.DoesNotExist:
             scholar = 0
         return JsonResponse({'userNum': user, 'scholarNum': scholar, 'adminNum': admin})
@@ -295,9 +298,14 @@ def getNum(request):
 def getUserItem(request):
     if request.method == 'GET':
         try:
-            num = len(Complaincomment.objects.filter(status=0))
-        except Complaincomment.DoesNotExist:
-            num = 0
+            num1 = len(Affiliation.objects.filter(status=0))
+        except Affiliation.DoesNotExist:
+            num1 = 0
+        try:
+            num2 = len(Scholar.objects.filter(status=0))
+        except Scholar.DoesNotExist:
+            num2 = 0
+        num = num1 + num2
         return JsonResponse({'num': num})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -418,3 +426,130 @@ def changePwd(request):
         return JsonResponse({'errno': 0, "msg": "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+<<<<<<< HEAD
+=======
+
+
+@csrf_exempt
+def getFavorites(request):
+    if request.method == 'GET':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
+        data = []
+        try:
+            favorites = Favorites.objects.filter(user_id=user_id)
+        except Favorites.DoesNotExist:
+            return JsonResponse(data)
+        for i in range(len(favorites)):
+            _id = favorites[i].field_id
+            title = favorites[i].title
+            create_time = favorites[i].create_time
+            avatar = favorites[i].avatar
+            count = favorites[i].count
+            data1 = {'id': _id, 'title': title, 'avatar': avatar, 'count': count,
+                     'time': create_time}
+            data.append(data1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def newFavorites(request):
+    if request.method == 'POST':
+        try:
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            user_id = payload.get('id')
+            req = simplejson.loads(request.body)
+            title = req['title']
+            curr_time = datetime.datetime.now()
+            time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+            favorite = Favorites(title=title, create_time=time_str, count=0, user_id=user_id)
+            favorite.save()
+            return JsonResponse({'errno': 0, 'msg': "创建成功"})
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def set_avatar(request):
+    if request.method == 'POST':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        uid = payload.get('id')
+        avatar = request.FILES.get('avatar')
+        if avatar is None or avatar == '':
+            return JsonResponse({'errno': -1, 'msg': "头像不能为空"})
+        if not avatar.name.lower().endswith(IMAGE_TAIL):
+            return JsonResponse({'errno': -2, 'msg': "文件格式错误"})
+        try:
+            user = User.objects.get(field_id=uid)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'errno': -3, 'msg': "用户不存在"})
+        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(uid) + '_' + avatar.name
+        try:
+            user.avatar = avatar_name
+            user.save()
+        except Exception as e:
+            print(e)
+            return JsonResponse({'errno': -4, 'msg': "未知错误"})
+        f = open(os.path.join(settings.MEDIA_ROOT, 'avatars', avatar_name), 'wb')
+        for i in avatar.chunks():
+            f.write(i)
+        f.close()
+        return JsonResponse({'errno': 0, 'msg': "上传成功"})
+    return JsonResponse({'errno': 1001, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getCollectFavorites(request):
+    if request.method == 'GET':
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        user_id = payload.get('id')
+        data = []
+        try:
+            favorites = Collectfavorites.objects.filter(user_id=user_id)
+        except Collectfavorites.DoesNotExist:
+            return JsonResponse(data)
+        for i in range(len(favorites)):
+            _id = favorites[i].favorites_id
+            favorite = Favorites.objects.get(field_id=_id)
+            title = favorite.title
+            create_time = favorite.create_time
+            avatar = favorite.avatar
+            count = favorite.count
+            data1 = {'id': _id, 'title': title, 'avatar': avatar, 'count': count,
+                     'time': create_time}
+            data.append(data1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def collectFavorites(request):
+    if request.method == 'POST':
+        try:
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            user_id = payload.get('id')
+            req = simplejson.loads(request.body)
+            favorites_id = req['favorites_id']
+            favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
+            favorite.save()
+            return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+>>>>>>> 201f2e47edb5a8667a911777b67a824187d535d8
