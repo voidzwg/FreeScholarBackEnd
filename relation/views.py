@@ -792,9 +792,9 @@ def processRequest(request):
             _id = request.POST.get('id')
             res = request.POST.get('agreeOrRefuse')
             reply = request.POST.get('reply')
-            if type1 == 0:
+            if type1 == "0":
                 try:
-                    obj = Complaincomment.objects.filter(field_id=_id)
+                    obj = Complaincomment.objects.get(field_id=_id)
                 except Complaincomment.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -806,9 +806,9 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 1:
+            elif type1 == "1":
                 try:
-                    obj = Complainauthor.objects.filter(field_id=_id)
+                    obj = Complainauthor.objects.get(field_id=_id)
                 except Complainauthor.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -820,9 +820,9 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 2:
+            elif type1 == "2":
                 try:
-                    obj = Complainpaper.objects.filter(field_id=_id)
+                    obj = Complainpaper.objects.get(field_id=_id)
                 except Complainpaper.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -834,27 +834,27 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 3:
+            elif type1 == "3":
                 try:
-                    obj = Affiliation.objects.filter(field_id=_id)
+                    obj = Affiliation.objects.get(field_id=_id)
                 except Affiliation.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 if res:
                     obj.status = 2
                 else:
                     obj.status = 1
-                obj.admin = user_id
+                obj.admin_id = user_id
                 obj.save()
-            elif type1 == 4:
+            elif type1 == "4":
                 try:
-                    obj = Scholar.objects.filter(field_id=_id)
+                    obj = Scholar.objects.get(field_id=_id)
                 except Scholar.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 if res:
                     obj.status = 2
                 else:
                     obj.status = 1
-                obj.admin = user_id
+                obj.admin_id = user_id
                 obj.save()
             return JsonResponse({'errno': 0, 'msg': "处理成功"})
         except Exception as e:
@@ -878,15 +878,16 @@ def showFavorites(request):
         papers = publication.search_by_id_list(pid)
         for i in range(len(res)):
             try:
-                col = Paper.objects.filter(paper_id=res[i].paper_id)
-                like_count = Paper.like_count
-                read_count = Paper.read_count
-                collect_count = Paper.collect_count
+                col = Paper.objects.get(paper_id=res[i].paper_id)
             except Paper.DoesNotExist:
                 col = None
                 like_count = 0
                 read_count = 0
                 collect_count = 0
+            if col is not None:
+                like_count = col.like_count
+                read_count = col.read_count
+                collect_count = col.collect_count
             data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
                      'paper': papers[i]}
             data.append(data1)
