@@ -70,7 +70,7 @@ def getBaseInfo(request):
                 counts += 0
         return JsonResponse({'username': u_name, 'avatar': avatar, 'institution': affi, 'bio': bio,
                              'follows': user_count, 'followers': scholar_count, 'likes': counts
-                             , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
+                                , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
                                 , 'gender': gender, 'login_date': login_date})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -105,7 +105,7 @@ def getFollows(request):
             avatar = user.avatar
 
             data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
-                , 'avatar': avatar, 'bio': bio,'time': users[i].create_time}
+                , 'avatar': avatar, 'bio': bio, 'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -342,18 +342,37 @@ def getComplainAll(request):
 @csrf_exempt
 def getRecentRecord(request):
     if request.method == 'GET':
-        try:
-            Complainpaper.objects.all.order_by('-create_time')
-            Complaincomment.objects.all.order_by('-create_time')
-            Complainauthor.objects.all.order_by('-create_time')
-        except Complainpaper.DoesNotExist:
-            num1 = 0
-        try:
-            num2 = len(Complainauthor.objects.filter(status=0))
-        except Complainauthor.DoesNotExist:
-            num2 = 0
-        num = num1 + num2
-        return JsonResponse({'num': num})
+        Complainpaper.objects.all.order_by('-create_time')
+        Complaincomment.objects.all.order_by('-create_time')
+        Complainauthor.objects.all.order_by('-create_time')
+        list1 = []
+        list2 = []
+        list3 = []
+        count = 0
+        dict = {}
+        for complainpaper in Complainpaper.objects.all():
+            if complainpaper.audit_time is not None:
+                dict[complainpaper.field_id] = complainpaper.audit_time
+            list1.append(complainpaper)
+            count += 1
+            if count > 5:
+                break
+        for complaincomment in Complaincomment.objects.all():
+            if complaincomment.audit_time is not None:
+                dict[complaincomment.field_id] = complaincomment.audit_time
+            list2.append(complaincomment)
+            count += 1
+            if count > 5:
+                break
+        for complainauthor in Complainauthor.objects.all():
+            if complainauthor.audit_time is not None:
+                dict[complainauthor.field_id] = complainauthor.audit_time
+            list3.append(complainauthor)
+            count += 1
+            if count > 5:
+                break
+
+        return JsonResponse({})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -426,7 +445,6 @@ def changePwd(request):
         return JsonResponse({'errno': 0, "msg": "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-
 
 
 @csrf_exempt
@@ -551,4 +569,3 @@ def collectFavorites(request):
             traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-
