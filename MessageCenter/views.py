@@ -20,14 +20,16 @@ def message_serialize(message_list, sender=True):
             user = message.owner
         json_data = {
             'mid': message.field_id,
-            'owner_id': message.owner.field_id,
-            'sender_id': message.sender.field_id,
             'username': user.name,
             'avatar': user.avatar,
             'content': message.content,
             'create_time': message.create_time,
             'is_read': message.is_read
         }
+        if sender:
+            json_data['sender_id'] = message.sender_id
+        else:
+            json_data['owner_id'] = message.owner_id
         full_message_list.append(json_data)
         if message.sender.field_id in SUPERUSER:
             system_message_list.append(json_data)
