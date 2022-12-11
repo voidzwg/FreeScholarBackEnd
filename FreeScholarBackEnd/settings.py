@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'searchList',
     'MessageCenter',
     'author',
+    'Files'
 ]
 
 MIDDLEWARE = [
