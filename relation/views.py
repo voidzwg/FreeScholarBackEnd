@@ -867,8 +867,7 @@ def showFavorites(request):
     if request.method == 'GET':
         data = []
         pid = []
-        req = simplejson.loads(request.body)
-        favorites_id = req['favorites_id']
+        favorites_id = request.GET['favorites_id']
         try:
             res = Collection.objects.filter(favorites=favorites_id)
         except Collection.DoesNotExist:
