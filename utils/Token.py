@@ -42,9 +42,6 @@ class Authentication:
         if token is None or token == "":
             return True, fail_json_msg2
         payload = cls.verify_jwt_token(token)
-        print(payload)
-        print(int(time.time()))
-
         if payload is None:
             return True, fail_json_msg
         elif int(payload.get('exp')) < int(time.time()):

@@ -36,7 +36,7 @@ class Media(View):
         if fail:
             return JsonResponse(payload)
         uid = payload.get('id')
-        img = request.FILE.get('img')
+        img = request.FILES.get('img')
         if img is None or img == '':
             return JsonResponse({'errno': -1, 'msg': "图片不能为空"})
         if not img.name.lower().endswith(IMAGE_TAIL):
