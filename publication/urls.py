@@ -13,5 +13,6 @@ urlpatterns = [
     path('getKeyListByIdList/',views.publication.getKeyListByIdList),
     path('getOrgListByIdList/',views.publication.getOrgListByIdList),
     path('getPaperByIdList/',views.publication.getPaperByIdList),
+    path('addPub/',views.publication.addPub),
 ]
 

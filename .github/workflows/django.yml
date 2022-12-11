@@ -24,7 +24,7 @@ jobs:
       run: |
         cd ${{github.workspace}}
         touch ../secrets.json
-        echo '{ "HOST": "'${{ secrets.HOST }}'", "PORT": "'${{ secrets.PORT }}'", "NAME": "'${{ secrets.NAME }}'", "USER": "'${{ secrets.USER }}'", "PASSWORD": "'${{ secrets.PASSWORD }}'", "LOCALTION": "'${{ secrets.LOCALTION }}'", "SECRET_KEY": "'${{ secrets.SECRET_KEY }}'", "JWT_SECRET": "'${{ secrets.JWT_SECRET }}'", "JWT_ALGORITHM": "'${{ secrets.JWT_ALGORITHM }}'", "SUPER_USER": '${{ secrets.SUPER_USER }}' }' > ../secrets.json
+        echo '{ "HOST": "'${{ secrets.HOST }}'", "PORT": "'${{ secrets.PORT }}'", "NAME": "'${{ secrets.NAME }}'", "USER": "'${{ secrets.USER }}'", "PASSWORD": "'${{ secrets.PASSWORD }}'", "LOCALTION": "'${{ secrets.LOCALTION }}'", "SECRET_KEY": "'${{ secrets.SECRET_KEY }}'", "JWT_SECRET": "'${{ secrets.JWT_SECRET }}'", "JWT_ALGORITHM": "'${{ secrets.JWT_ALGORITHM }}'", "SUPER_USER": '${{ secrets.SUPER_USER }}', "ADMIN": '${{ secrets.ADMIN }}' }' > ../secrets.json
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip

@@ -9,6 +9,7 @@ from django_redis import get_redis_connection
 from user.models import *
 from utils.Token import Authentication
 from utils.media import *
+from utils.superuser import ADMIN
 
 token_expire = 60 * 60 * 1
 r = get_redis_connection()
@@ -61,6 +62,9 @@ def register(request):  # 继承请求类
         # id 是自动复制，不需要指明
         # 设置头像为默认头像
         new_user.avatar = DEFAULT_AVATAR
+        new_user.identity = 1
+        new_user.state = 0
+        new_user.gender = 0
         new_user.save()
         return JsonResponse({'errno': 0, 'msg': "注册成功"})
     except Exception as e:
@@ -79,8 +83,12 @@ def login(request):
     except User.DoesNotExist:
         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
 
+    if user.state == 2:
+        return JsonResponse({'errno': 2, 'msg': "用户已被封禁"})
+
     if user.pwd == password:
-        token = Authentication.create_token(user.field_id)
+        is_admin = (user.field_id in ADMIN)
+        token = Authentication.create_token(user.field_id, admin=is_admin)
         user_info = {
             'errno': 0,
             'name': user.name,
@@ -88,6 +96,7 @@ def login(request):
             'profile': user.bio,
             'avatar': user.avatar,
             'token': token,
+            'isAdmin': is_admin
         }
         return JsonResponse(user_info)
     else:
