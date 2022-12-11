@@ -1,7 +1,10 @@
 # Create your views here.
+import datetime
+
 from django.http import JsonResponse
 from django.views.generic import View
 
+from utils.Token import Authentication
 from .models import Message, User
 from utils.superuser import SUPERUSER
 
@@ -38,41 +41,47 @@ class MessageCenter(View):
     get_type = post_type = 0
 
     def get(self, request, *args, **kwargs):
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        uid = payload.get('id')
         if self.get_type == 1 or self.get_type == 2:
-            owner_id = request.GET.get('owner_id')
-            try:
-                owner = User.objects.get(field_id=owner_id)
-            except:
-                return JsonResponse({'errno': 1, 'msg': "owner不存在"})
-            message_list = Message.objects.filter(owner=owner)
+            message_list = Message.objects.filter(owner_id=uid)
             system_message_list, user_message_list, full_message_list = message_serialize(message_list)
             if self.get_type == 1:
                 return JsonResponse(system_message_list, safe=False)
             else:
                 return JsonResponse(user_message_list, safe=False)
         elif self.get_type == 3:
-            sender_id = request.GET.get('sender_id')
-            try:
-                sender = User.objects.get(field_id=sender_id)
-            except:
-                return JsonResponse({'errno': 1, 'msg': "sender不存在"})
-            message_list = Message.objects.filter(sender=sender)
+            message_list = Message.objects.filter(sender_id=uid)
             system_message_list, user_message_list, full_message_list = message_serialize(message_list, sender=False)
             return JsonResponse(full_message_list, safe=False)
         else:
             return JsonResponse({'errno': 2, 'msg': "illegal get_type"})
 
     def post(self, request, *args, **kwargs):
-        mid = request.POST.get('mid')
-        try:
-            message = self.model.objects.get(field_id=mid)
-        except:
-            return JsonResponse({'errno': 1, 'msg': "message不存在"})
-        if self.post_type == 1:
-            message.delete()
-        elif self.post_type == 2:
-            message.is_read = True
-            message.save()
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        if self.post_type != 3:
+            mid = request.POST.get('mid')
+            try:
+                message = self.model.objects.get(field_id=mid)
+            except Message.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "message不存在"})
+            if self.post_type == 1:
+                message.delete()
+            elif self.post_type == 2:
+                message.is_read = True
+                message.save()
+            else:
+                return JsonResponse({'errno': 2, 'msg': "illegal post_type"})
         else:
-            return JsonResponse({'errno': 2, 'msg': "illegal post_type"})
+            owner_id = request.POST.get('owner_id')
+            content = request.POST.get('content')
+            sender_id = payload.get('id')
+            create_time = datetime.datetime.now()
+            msg = Message(owner_id=owner_id, sender_id=sender_id, content=content,
+                          create_time=create_time, is_read=False)
+            msg.save()
         return JsonResponse({'errno': 0, 'msg': 'success'})
