@@ -19,6 +19,7 @@ class Authentication:
             'admin': admin,
             'exp': token_expire
         }
+        print(payload)
         token_obj = cls.generate_jwt_token(payload)
         cls.redis_connection.set(uid, token_obj)
         return token_obj

@@ -236,7 +236,8 @@ class publication:
                 for i in Top_paper:
                     field_id = i[0].decode()
                     paper = Paper.objects.get(field_id=field_id)
-                    paper_data.append({'paper_name': paper.paper_name})
+                    paper_data.append({'title': paper.paper_name, 'id': paper.paper_id, 'read_count': paper.read_count,
+                                       'like_count': paper.like_count, 'collect_count': paper.collect_count})
                 result = {
                     'paper': paper_data
                 }
@@ -266,15 +267,15 @@ class publication:
 
     def ReadPaper(request):
         if request.method == 'POST':
-            if request.method == 'POST':
-                fail, payload = Authentication.authentication(request.META)
-                if fail:
-                    return JsonResponse(payload)
-                try:
-                    user_id = payload.get('id')
-                    user = User.objects.get(field_id=user_id)
-                except User.DoesNotExist:
-                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            # # if request.method == 'POST':
+            # #     fail, payload = Authentication.authentication(request.META)
+            # #     if fail:
+            # #         return JsonResponse(payload)
+            # #     try:
+            # #         user_id = payload.get('id')
+            # #         user = User.objects.get(field_id=user_id)
+            #     except User.DoesNotExist:
+            #         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
@@ -296,12 +297,12 @@ class publication:
                     paper.read_count = 1
                     paper.like_count = 0
                     paper.collect_count = 0
-                    paper.save_paper_data()
                     paper.save()
+                    paper.save_paper_data()
                 else:
                     paper.read_count += 1
-                    paper.save_paper_data()
                     paper.save()
+                    paper.save_paper_data()
                 return JsonResponse(
                     {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.read_count,
                      'comment': comment_result})
@@ -332,15 +333,44 @@ class publication:
                         comment = Comment()
                         comment.user = user
                         comment.paper_id = paper_id
-                        comment.count=0
+                        comment.count = 0
                         comment.content = content
                         comment.create_time = datetime.datetime
                         comment.save()
-                    return JsonResponse({'message': "点赞成功"})
+                    return JsonResponse({'message': "评论成功"})
                 except Exception as e:
                     traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
+    def LikeComment(request):
+        if request.method == 'POST':
+            if request.method == 'POST':
+                fail, payload = Authentication.authentication(request.META)
+                if fail:
+                    return JsonResponse(payload)
+                try:
+                    user_id = payload.get('id')
+                    user = User.objects.get(field_id=user_id)
+                except User.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+                try:
+                    data_body = request.POST
+                    comment_id=data_body.get('comment_id')
+                    like1 = Like1()
+                    like1.comment_id=comment_id
+                    like1.user=user
+                    like1.create_time=datetime.datetime
+                    like1.save()
+                    comment=Comment.objects.filter(comment_id=comment_id).first()
+                    if comment is None:
+                        return JsonResponse({'error':1, 'msg':"评论不存在"})
+                    comment.count+=1
+                    comment.save()
+                except Exception as e:
+                    traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
 
     def LikePaper(request):
         if request.method == 'POST':
