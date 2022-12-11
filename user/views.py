@@ -62,6 +62,9 @@ def register(request):  # 继承请求类
         # id 是自动复制，不需要指明
         # 设置头像为默认头像
         new_user.avatar = DEFAULT_AVATAR
+        new_user.identity = 1
+        new_user.state = 0
+        new_user.gender = 0
         new_user.save()
         return JsonResponse({'errno': 0, 'msg': "注册成功"})
     except Exception as e:
