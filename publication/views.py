@@ -304,7 +304,7 @@ class publication:
                     paper.save()
                     paper.save_paper_data()
                 return JsonResponse(
-                    {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.read_count,
+                    {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.collect_count,
                      'comment': comment_result})
             except Exception as e:
                 traceback.print_exc()
