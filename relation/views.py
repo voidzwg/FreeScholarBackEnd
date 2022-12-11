@@ -249,7 +249,7 @@ def getUser(request):
 @csrf_exempt
 def setNormal(request):
     if request.method == 'POST':
-        user_id = request.POST.get['_id']
+        user_id = request.POST.get('_id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -264,7 +264,7 @@ def setNormal(request):
 @csrf_exempt
 def setMute(request):
     if request.method == 'POST':
-        user_id = request.POST.get['_id']
+        user_id = request.POST.get('_id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -279,7 +279,7 @@ def setMute(request):
 @csrf_exempt
 def setBan(request):
     if request.method == 'POST':
-        user_id = request.POST.get['_id']
+        user_id = request.POST.get('_id')
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
