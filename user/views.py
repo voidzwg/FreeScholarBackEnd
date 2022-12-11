@@ -17,7 +17,7 @@ r = get_redis_connection()
 @csrf_exempt  # 跨域设置
 def register(request):  # 继承请求类
     if request.method != 'POST':
-        return JsonResponse({'errno': 0, 'msg': "请求方式错误"})
+        return JsonResponse({'errno': -1, 'msg': "请求方式错误"})
     # 判断请求方式是否为 POST
     try:
         data_body = request.POST
@@ -28,7 +28,7 @@ def register(request):  # 继承请求类
 
         new_user = User()
         if len(username) > 10:
-            return JsonResponse({'errno': 0, 'msg': "用户名过长"})
+            return JsonResponse({'errno': -2, 'msg': "用户名过长"})
 
         new_user.name = username
 
@@ -36,26 +36,25 @@ def register(request):  # 继承请求类
             JsonResponse({'errno': 0, 'msg': "用户名含有非法字符"})
 
         if User.objects.filter(name=username).exists():
-            return JsonResponse({'errno': 0, 'msg': "用户名已被使用"})
+            return JsonResponse({'errno': -3, 'msg': "用户名已被使用"})
 
         new_user.mail = email
         print(email)
         if not new_user.validate_email():
-            return JsonResponse({'errno': 0, 'msg': "邮箱不合法"})
+            return JsonResponse({'errno': -4, 'msg': "邮箱不合法"})
         # if User.objects.filter(mail=email).exists():
         #     return JsonResponse({'errno': 0, 'msg': "邮箱已被使用"})
 
         if len(password_1) < 5 or len(password_1) > 18:
-            return JsonResponse({'errno':
-                                     0, 'msg': "密码长度不合法"})
+            return JsonResponse({'errno': -5, 'msg': "密码长度不合法"})
 
         if password_1 != password_2:
-            return JsonResponse({'errno': 0, 'msg': "两次输入的密码不同"})
+            return JsonResponse({'errno': -6, 'msg': "两次输入的密码不同"})
 
         new_user.pwd = password_1
 
         if not new_user.validate_password():
-            return JsonResponse({'errno': 0, 'msg': "密码类型不合法"})
+            return JsonResponse({'errno': -7, 'msg': "密码类型不合法"})
 
             # 新建 Author 对象，赋值用户名和密码保存
 
@@ -63,7 +62,7 @@ def register(request):  # 继承请求类
         # 设置头像为默认头像
         new_user.avatar = DEFAULT_AVATAR
         new_user.save()
-        return JsonResponse({'errno': 1, 'msg': "注册成功"})
+        return JsonResponse({'errno': 0, 'msg': "注册成功"})
     except Exception as e:
         traceback.print_exc()
 
