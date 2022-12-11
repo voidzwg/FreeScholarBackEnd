@@ -426,8 +426,7 @@ def changePwd(request):
         return JsonResponse({'errno': 0, "msg": "success"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-<<<<<<< HEAD
-=======
+
 
 
 @csrf_exempt
@@ -552,4 +551,4 @@ def collectFavorites(request):
             traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
->>>>>>> 201f2e47edb5a8667a911777b67a824187d535d8
+

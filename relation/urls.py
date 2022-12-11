@@ -19,15 +19,15 @@ urlpatterns = [
     path('getScholarItem', getScholarItem),
     path('editInfo', editInfo),
     path('changePwd', changePwd),
-<<<<<<< HEAD
+
     path('getReportAll',getReportAll),
     path('getComplainAll',getComplainAll),
     path('getRecentRecord',getRecentRecord),
-=======
+
     path('getFavorites', getFavorites),
     path('newFavorites', newFavorites),
     path('set_avatar/', set_avatar),
     path('getCollectFavorites', getCollectFavorites),
     path('collectFavorites', collectFavorites),
->>>>>>> 201f2e47edb5a8667a911777b67a824187d535d8
+
 ]
