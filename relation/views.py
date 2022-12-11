@@ -11,6 +11,7 @@ from relation.models import *
 from utils.Token import Authentication
 from utils.media import *
 from publication.views import publication
+from FreeScholarBackEnd.settings import SECRETS
 
 @csrf_exempt
 def test(request):
@@ -230,6 +231,11 @@ def like(request):
 
 @csrf_exempt
 def getUser(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         users = User.objects.all()
@@ -248,6 +254,11 @@ def getUser(request):
 
 @csrf_exempt
 def setNormal(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         user_id = request.POST.get('_id')
         try:
@@ -263,6 +274,11 @@ def setNormal(request):
 
 @csrf_exempt
 def setMute(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         user_id = request.POST.get('_id')
         try:
@@ -278,6 +294,11 @@ def setMute(request):
 
 @csrf_exempt
 def setBan(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         user_id = request.POST.get('_id')
         try:
@@ -293,13 +314,18 @@ def setBan(request):
 
 @csrf_exempt
 def getNum(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             user = len(User.objects.all())
         except User.DoesNotExist:
             user = 0
         try:
-            admin = len(User.objects.filter(identity=3))
+            admin = len(SECRETS.get('ADMIN'))
         except User.DoesNotExist:
             admin = 0
         try:
@@ -313,6 +339,11 @@ def getNum(request):
 
 @csrf_exempt
 def getUserItem(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Affiliation.objects.filter(status=0))
@@ -329,6 +360,11 @@ def getUserItem(request):
 
 
 def getReportAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Complaincomment.objects.filter(status=1))
@@ -346,6 +382,11 @@ def getReportAll(request):
 
 @csrf_exempt
 def getComplainAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num = len(Complainpaper.objects.filter(status=1))
@@ -358,6 +399,11 @@ def getComplainAll(request):
 
 @csrf_exempt
 def getRecentRecord(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             Complainpaper.objects.order_by('-audit_time')
@@ -440,6 +486,11 @@ def getRecentRecord(request):
 
 @csrf_exempt
 def getScholarItem(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Complainpaper.objects.filter(status=0))
@@ -608,6 +659,11 @@ def collectFavorites(request):
 
 @csrf_exempt
 def getUserItemAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         # fail, payload = Authentication.authentication(request.META)
         # if fail:
@@ -629,6 +685,11 @@ def getUserItemAll(request):
 
 @csrf_exempt
 def getAllAccusationRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             data = []
@@ -655,6 +716,11 @@ def getAllAccusationRecords(request):
 
 @csrf_exempt
 def getAllAppealRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -670,6 +736,11 @@ def getAllAppealRecords(request):
 
 
 def getAllInstitutionApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -685,6 +756,11 @@ def getAllInstitutionApplication(request):
 
 
 def getAllScholarApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -701,6 +777,11 @@ def getAllScholarApplication(request):
 
 @csrf_exempt
 def getPendingAccusationRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             data = []
@@ -727,6 +808,11 @@ def getPendingAccusationRecords(request):
 
 @csrf_exempt
 def getPendingAppealRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -742,6 +828,11 @@ def getPendingAppealRecords(request):
 
 
 def getPendingInstitutionApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -757,6 +848,11 @@ def getPendingInstitutionApplication(request):
 
 
 def getPendingScholarApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         data = []
         try:
@@ -773,6 +869,11 @@ def getPendingScholarApplication(request):
 
 @csrf_exempt
 def processRequest(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         try:
             fail, payload = Authentication.authentication(request.META)
