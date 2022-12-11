@@ -12,4 +12,5 @@ urlpatterns = [
     path('getVenueListByIdList/',views.publication.getVenueListByIdList),
     path('getKeyListByIdList/',views.publication.getKeyListByIdList),
     path('getOrgListByIdList/',views.publication.getOrgListByIdList),
+    path('getPaperByIdList/',views.publication.getPaperByIdList),
 ]

@@ -253,7 +253,7 @@ class publication:
                     field = Field.objects.get(field_id=field_id)
                     word_data.append({'word_name': field.name})
                 result = {
-                    'paper': word_data
+                    'word': word_data
                 }
                 return JsonResponse(result)
             except Exception as e:
@@ -263,6 +263,15 @@ class publication:
 
     def ReadPaper(request):
         if request.method == 'POST':
+            if request.method == 'POST':
+                fail, payload = Authentication.authentication(request.META)
+                if fail:
+                    return JsonResponse(payload)
+                try:
+                    user_id = payload.get('id')
+                    user = User.objects.get(field_id=user_id)
+                except User.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
@@ -289,6 +298,15 @@ class publication:
 
     def LikePaper(request):
         if request.method == 'POST':
+            if request.method == 'POST':
+                fail, payload = Authentication.authentication(request.META)
+                if fail:
+                    return JsonResponse(payload)
+                try:
+                    user_id = payload.get('id')
+                    user = User.objects.get(field_id=user_id)
+                except User.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
@@ -407,3 +425,17 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    def getPaperByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                resp = publication.search_by_id_list(idList)
+                data = []
+                for h in resp:
+                    data.append(h['_source'])
+                return JsonResponse({'data':data})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
