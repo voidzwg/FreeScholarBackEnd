@@ -12,5 +12,5 @@ urlpatterns = [
     path('logout/', logout),
     path('complainSochlar/',complainSochlar),
     path('complainComment/',complainComment),
-    paht('complainPaper/',complainSochlar),
+    path('complainPaper/',complainSochlar),
 ]
