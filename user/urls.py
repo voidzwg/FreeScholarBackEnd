@@ -10,4 +10,7 @@ urlpatterns = [
     path('register/', register),
     path('login/', login),
     path('logout/', logout),
+    path('complainSochlar/',complainSochlar),
+    path('complainComment/',complainComment),
+    path('complainPaper/',complainSochlar),
 ]

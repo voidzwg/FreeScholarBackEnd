@@ -96,7 +96,7 @@ def getBaseInfo(request):
                 counts += 0
         return JsonResponse({'username': u_name, 'avatar': avatar, 'institution': affi, 'bio': bio,
                              'follows': user_count, 'followers': scholar_count, 'likes': counts
-                             , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
+                                , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
                                 , 'gender': gender, 'login_date': login_date})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -131,7 +131,7 @@ def getFollows(request):
             avatar = user.avatar
 
             data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
-                , 'avatar': avatar, 'bio': bio,'time': users[i].create_time}
+                , 'avatar': avatar, 'bio': bio, 'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -369,19 +369,82 @@ def getComplainAll(request):
 def getRecentRecord(request):
     if request.method == 'GET':
         try:
-            Complainpaper.objects.all.order_by('-create_time')
-            Complaincomment.objects.all.order_by('-create_time')
-            Complainauthor.objects.all.order_by('-create_time')
-        except Complainpaper.DoesNotExist:
-            num1 = 0
-        try:
-            num2 = len(Complainauthor.objects.filter(status=0))
-        except Complainauthor.DoesNotExist:
-            num2 = 0
-        num = num1 + num2
-        return JsonResponse({'num': num})
+            Complainpaper.objects.order_by('-audit_time')
+            Complaincomment.objects.order_by('-audit_time')
+            Complainauthor.objects.order_by('-audit_time')
+            list1 = []
+            list2 = []
+            list3 = []
+            count = 0
+            dict = {}
+            for complainpaper in Complainpaper.objects.all():
+                if complainpaper.audit_time is not None:
+                    dict[complainpaper.audit_time] = complainpaper.field_id
+                list1.append(complainpaper)
+                count += 1
+                if count > 5:
+                    break
+            for complaincomment in Complaincomment.objects.all():
+                if complaincomment.audit_time is not None:
+                    dict[complaincomment.audit_time] = complaincomment.field_id
+                list2.append(complaincomment)
+                count += 1
+                if count > 5:
+                    break
+            for complainauthor in Complainauthor.objects.all():
+                if complainauthor.audit_time is not None:
+                    dict[complainauthor.audit_time] = complainauthor.field_id
+                list3.append(complainauthor)
+                count += 1
+                if count > 5:
+                    break
+            result = []
+            keys = list(dict.keys())
+            keys.sort(reverse=False)
+            for key in keys:
+                for i in list1:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 0
+                        else:
+                            type = 2
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                for i in list2:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 1
+                        else:
+                            type = 3
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                for i in list3:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 0
+                        else:
+                            type = 2
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                count += 1
+                if count > 5:
+                    break
+
+            return JsonResponse({'result': result})
+        except Exception as e:
+            traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
 
 
 @csrf_exempt
@@ -454,7 +517,6 @@ def changePwd(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
-
 @csrf_exempt
 def getFavorites(request):
     if request.method == 'GET':
@@ -500,37 +562,6 @@ def newFavorites(request):
             traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-
-
-def set_avatar(request):
-    if request.method == 'POST':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        uid = payload.get('id')
-        avatar = request.FILES.get('avatar')
-        if avatar is None or avatar == '':
-            return JsonResponse({'errno': -1, 'msg': "头像不能为空"})
-        if not avatar.name.lower().endswith(IMAGE_TAIL):
-            return JsonResponse({'errno': -2, 'msg': "文件格式错误"})
-        try:
-            user = User.objects.get(field_id=uid)
-        except Exception as e:
-            print(e)
-            return JsonResponse({'errno': -3, 'msg': "用户不存在"})
-        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(uid) + '_' + avatar.name
-        try:
-            user.avatar = avatar_name
-            user.save()
-        except Exception as e:
-            print(e)
-            return JsonResponse({'errno': -4, 'msg': "未知错误"})
-        f = open(os.path.join(settings.MEDIA_ROOT, 'avatars', avatar_name), 'wb')
-        for i in avatar.chunks():
-            f.write(i)
-        f.close()
-        return JsonResponse({'errno': 0, 'msg': "上传成功"})
-    return JsonResponse({'errno': 1001, 'msg': "请求方式错误"})
 
 
 @csrf_exempt
@@ -583,19 +614,20 @@ def collectFavorites(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
+
 @csrf_exempt
 def getUserItemAll(request):
     if request.method == 'GET':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        user_id = payload.get('id')
+        # fail, payload = Authentication.authentication(request.META)
+        # if fail:
+        #     return JsonResponse(payload)
+        # user_id = payload.get('id')
         try:
-            num1 = len(Affiliation.objects.filter(status=1, admin=user_id))
+            num1 = len(Affiliation.objects.filter(status=1))
         except Affiliation.DoesNotExist:
             num1 = 0
         try:
-            num2 = len(Scholar.objects.filter(status=1, admin=user_id))
+            num2 = len(Scholar.objects.filter(status=1))
         except Scholar.DoesNotExist:
             num2 = 0
         num = num1+num2
@@ -861,3 +893,5 @@ def showFavorites(request):
         return JsonResponse(data, safe=False)
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+

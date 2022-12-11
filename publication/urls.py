@@ -14,3 +14,4 @@ urlpatterns = [
     path('getOrgListByIdList/',views.publication.getOrgListByIdList),
     path('getPaperByIdList/',views.publication.getPaperByIdList),
 ]
+
