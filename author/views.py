@@ -43,6 +43,12 @@ class author:
                         pubs.append(h['_source'])
                     data['pubs'] = pubs
                     authors = []
+                    # for p in pubs:
+                    #      for a in p['authors']:
+                    #          if a['name'] in authors:
+                    #              authors[a['name']]+=1
+                    #          else:
+                    #              authors[a['name']]=1
                     for p in pubs:
                         for a in p['authors']:
                             flag = False
@@ -57,8 +63,8 @@ class author:
                                     continue
                                 body = {
                                     "query": {
-                                        'bool':{
-                                            'must':[
+                                        "bool":{
+                                            'filter':[
                                                 {"term": {
                                                     "authors.id": id
                                                 }},
@@ -80,8 +86,25 @@ class author:
                             else:
                                 if a['name'] == data['name']:
                                     continue
+                                body = {
+                                    "query": {
+                                        "bool":{
+                                            'filter': [
+                                                {"term": {
+                                                    "authors.id": id
+                                                }},
+
+                                                {"term": {
+                                                    "authors.name.keyword": a['name']
+                                                }}
+                                            ]
+                                        }
+                                    }
+                                }
+                                count = client.count(index='paper', body=body)
                                 item = {
                                     'name': a['name'],
+                                    'count':count['count'],
                                 }
                                 authors.append(item)
                     return JsonResponse({'data':data,'coworkers':authors})

@@ -6,7 +6,6 @@ from publication.models import *
 from utils import Rating
 from FreeScholarBackEnd.settings import *
 
-
 class publication:
 
     def GetWord(request):
@@ -437,5 +436,15 @@ class publication:
                 return JsonResponse({'data':data})
             else:
                 return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
+    def addPub(request):
+        try:
+            if request.method == 'POST':
+                return JsonResponse({'resp':1})
+            else:
+                return JsonResponse({'errno': '1'})
+
         except Exception as e:
             traceback.print_exc()
