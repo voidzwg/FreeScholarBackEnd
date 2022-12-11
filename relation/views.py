@@ -15,33 +15,19 @@ from FreeScholarBackEnd.settings import SECRETS
 
 @csrf_exempt
 def test(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             data = []
-            pid = []
             req = simplejson.loads(request.body)
-            favorites_id = req['favorites_id']
-            try:
-                res = Collection.objects.filter(favorites=favorites_id)
-            except Collection.DoesNotExist:
-                res = None
-            for i in range(len(res)):
-                pid.append(res[i].paper_id)
-            papers = publication.search_by_id_list(pid)
-            for i in range(len(res)):
-                try:
-                    col = Paper.objects.get(paper_id=res[i].paper_id)
-                except Paper.DoesNotExist:
-                    col = None
-                    like_count = 0
-                    read_count = 0
-                    collect_count = 0
-                if col is not None:
-                    like_count = col.like_count
-                    read_count = col.read_count
-                    collect_count = col.collect_count
-                data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
-                         'paper': papers[i]}
+            content = req['input']
+            users = User.objects.filter(name__icontains=content)
+            for i in range(len(users)):
+                user_id = users[i].field_id
+                name = users[i].name
+                mail = users[i].mail
+                avatar = users[i].avatar
+                state = users[i].state
+                data1 = {'id': user_id, 'name': name, 'mail': mail, 'avatar': avatar, 'state': state}
                 data.append(data1)
             return JsonResponse(data, safe=False)
         except Exception as e:
@@ -236,9 +222,11 @@ def getUser(request):
         return JsonResponse(payload)
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
-    if request.method == 'GET':
+    if request.method == 'POST':
         data = []
-        users = User.objects.all()
+        req = simplejson.loads(request.body)
+        content = req['input']
+        users = User.objects.filter(name__icontains=content)
         for i in range(len(users)):
             user_id = users[i].field_id
             name = users[i].name
@@ -260,7 +248,8 @@ def setNormal(request):
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -280,7 +269,8 @@ def setMute(request):
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -300,7 +290,8 @@ def setBan(request):
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        user_id = request.POST.get('_id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
