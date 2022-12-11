@@ -417,8 +417,8 @@ def getRecentRecord(request):
             return JsonResponse({'result': result})
         except Exception as e:
             traceback.print_exc()
-        else:
-            return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
 
@@ -589,16 +589,16 @@ def collectFavorites(request):
 @csrf_exempt
 def getUserItemAll(request):
     if request.method == 'GET':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        user_id = payload.get('id')
+        # fail, payload = Authentication.authentication(request.META)
+        # if fail:
+        #     return JsonResponse(payload)
+        # user_id = payload.get('id')
         try:
-            num1 = len(Affiliation.objects.filter(status=1, admin=user_id))
+            num1 = len(Affiliation.objects.filter(status=1))
         except Affiliation.DoesNotExist:
             num1 = 0
         try:
-            num2 = len(Scholar.objects.filter(status=1, admin=user_id))
+            num2 = len(Scholar.objects.filter(status=1))
         except Scholar.DoesNotExist:
             num2 = 0
         num = num1+num2
