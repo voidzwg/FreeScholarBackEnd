@@ -83,6 +83,9 @@ def login(request):
     except User.DoesNotExist:
         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
 
+    if user.state == 2:
+        return JsonResponse({'errno': 2, 'msg': "用户已被封禁"})
+
     if user.pwd == password:
         is_admin = (user.field_id in ADMIN)
         token = Authentication.create_token(user.field_id, admin=is_admin)
