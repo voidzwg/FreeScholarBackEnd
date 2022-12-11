@@ -12,12 +12,19 @@ class Media(View):
     post_type = 0
     model = None
 
-    def upload_img(self, field_id, img, url):
+    def upload_img(self, field_id, img, url, uid=None, check_owner=False):
         try:
             obj = self.model.objects.get(field_id=field_id)
         except self.model.DoesNotExist as e:
             print(e)
-            return None
+            return {'errno': -3, 'msg': "模型不存在"}
+        if check_owner:
+            try:
+                if obj.user_id != uid:
+                    return {'errno': -7, 'msg': "无权限"}
+            except Exception as e:
+                print(e)
+                return {'errno': -4, 'msg': "模型不存在对应属性"}
         img_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(field_id) + '_' + img.name
         try:
             obj.avatar = img_name
@@ -36,7 +43,7 @@ class Media(View):
         if fail:
             return JsonResponse(payload)
         uid = payload.get('id')
-        img = request.FILE.get('img')
+        img = request.FILES.get('img')
         if img is None or img == '':
             return JsonResponse({'errno': -1, 'msg': "图片不能为空"})
         if not img.name.lower().endswith(IMAGE_TAIL):
@@ -45,14 +52,10 @@ class Media(View):
             return JsonResponse({'errno': -6, 'msg': "illegal model"})
         if self.post_type == 1:
             ret = self.upload_img(uid, img, 'avatars')
-            if ret is None:
-                return JsonResponse({'errno': -3, 'msg': "用户不存在"})
             return JsonResponse(ret)
         elif self.post_type == 2:
             fid = request.POST.get('fid')
-            ret = self.upload_img(fid, img, 'coverimgs')
-            if ret is None:
-                return JsonResponse({'errno': -3, 'msg': "收藏夹不存在"})
+            ret = self.upload_img(fid, img, 'coverimgs', uid=uid, check_owner=True)
             return JsonResponse(ret)
         else:
             return JsonResponse({'errno': -5, 'msg': "illegal post type"})

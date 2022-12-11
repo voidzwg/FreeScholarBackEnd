@@ -10,16 +10,41 @@ from django.views.decorators.csrf import csrf_exempt
 from relation.models import *
 from utils.Token import Authentication
 from utils.media import *
-
+from publication.views import publication
 
 @csrf_exempt
 def test(request):
     if request.method == 'GET':
         try:
-            follow = Follow.objects.all()
-        except Follow.DoesNotExist:
-            return JsonResponse({'errno': 1, 'msg': "删除失败"})
-        return JsonResponse({'errno': len(follow)})
+            data = []
+            pid = []
+            req = simplejson.loads(request.body)
+            favorites_id = req['favorites_id']
+            try:
+                res = Collection.objects.filter(favorites=favorites_id)
+            except Collection.DoesNotExist:
+                res = None
+            for i in range(len(res)):
+                pid.append(res[i].paper_id)
+            papers = publication.search_by_id_list(pid)
+            for i in range(len(res)):
+                try:
+                    col = Paper.objects.get(paper_id=res[i].paper_id)
+                except Paper.DoesNotExist:
+                    col = None
+                    like_count = 0
+                    read_count = 0
+                    collect_count = 0
+                if col is not None:
+                    like_count = col.like_count
+                    read_count = col.read_count
+                    collect_count = col.collect_count
+                data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
+                         'paper': papers[i]}
+                data.append(data1)
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -576,9 +601,13 @@ def collectFavorites(request):
             user_id = payload.get('id')
             req = simplejson.loads(request.body)
             favorites_id = req['favorites_id']
-            favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
-            favorite.save()
-            return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+            try:
+                Collectfavorites.objects.get(favorites_id=favorites_id, user_id=user_id)
+            except Collectfavorites.DoesNotExist:
+                favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
+                favorite.save()
+                return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+            return JsonResponse({'errno': 1, 'msg': "已经收藏该收藏夹"})
         except Exception as e:
             traceback.print_exc()
     else:
@@ -763,9 +792,9 @@ def processRequest(request):
             _id = request.POST.get('id')
             res = request.POST.get('agreeOrRefuse')
             reply = request.POST.get('reply')
-            if type1 == 0:
+            if type1 == "0":
                 try:
-                    obj = Complaincomment.objects.filter(field_id=_id)
+                    obj = Complaincomment.objects.get(field_id=_id)
                 except Complaincomment.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -777,9 +806,9 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 1:
+            elif type1 == "1":
                 try:
-                    obj = Complainauthor.objects.filter(field_id=_id)
+                    obj = Complainauthor.objects.get(field_id=_id)
                 except Complainauthor.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -791,9 +820,9 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 2:
+            elif type1 == "2":
                 try:
-                    obj = Complainpaper.objects.filter(field_id=_id)
+                    obj = Complainpaper.objects.get(field_id=_id)
                 except Complainpaper.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 curr_time = datetime.datetime.now()
@@ -805,27 +834,27 @@ def processRequest(request):
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
-            elif type1 == 3:
+            elif type1 == "3":
                 try:
-                    obj = Affiliation.objects.filter(field_id=_id)
+                    obj = Affiliation.objects.get(field_id=_id)
                 except Affiliation.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 if res:
                     obj.status = 2
                 else:
                     obj.status = 1
-                obj.admin = user_id
+                obj.admin_id = user_id
                 obj.save()
-            elif type1 == 4:
+            elif type1 == "4":
                 try:
-                    obj = Scholar.objects.filter(field_id=_id)
+                    obj = Scholar.objects.get(field_id=_id)
                 except Scholar.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 if res:
                     obj.status = 2
                 else:
                     obj.status = 1
-                obj.admin = user_id
+                obj.admin_id = user_id
                 obj.save()
             return JsonResponse({'errno': 0, 'msg': "处理成功"})
         except Exception as e:
@@ -837,13 +866,30 @@ def processRequest(request):
 def showFavorites(request):
     if request.method == 'GET':
         data = []
+        pid = []
+        favorites_id = request.GET['favorites_id']
         try:
-            res = Collection.objects.filter(status=0)
+            res = Collection.objects.filter(favorites=favorites_id)
         except Collection.DoesNotExist:
             res = None
         for i in range(len(res)):
-            pid = res[i].paper_id
-
+            pid.append(res[i].paper_id)
+        papers = publication.search_by_id_list(pid)
+        for i in range(len(res)):
+            try:
+                col = Paper.objects.get(paper_id=res[i].paper_id)
+            except Paper.DoesNotExist:
+                col = None
+                like_count = 0
+                read_count = 0
+                collect_count = 0
+            if col is not None:
+                like_count = col.like_count
+                read_count = col.read_count
+                collect_count = col.collect_count
+            data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
+                     'paper': papers[i]}
+            data.append(data1)
         return JsonResponse(data, safe=False)
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})

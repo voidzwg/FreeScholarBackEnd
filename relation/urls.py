@@ -35,7 +35,7 @@ urlpatterns = [
     path('getPendingAppealRecords', getPendingAppealRecords),
     path('getPendingInstitutionApplication', getPendingInstitutionApplication),
     path('getPendingScholarApplication', getPendingScholarApplication),
-    path('ProcessRequest', processRequest),
+    path('processRequest', processRequest),
     path('showFavorites', showFavorites),
     path('getRecentRecord',getRecentRecord),
 
