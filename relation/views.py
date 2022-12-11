@@ -879,3 +879,4 @@ def showFavorites(request):
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
+

@@ -1,3 +1,4 @@
+import datetime
 import traceback
 
 # publish/views.py
@@ -5,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django_redis import get_redis_connection
 
-from user.models import User, Scholar, Follow
+from user.models import *
 from utils.Token import Authentication
 from utils.media import *
 
@@ -211,15 +212,15 @@ def getFollowers(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
+    user_id=payload.get('id')
     user = User.objects.get(field_id=payload.get('id'))
-    user_id = user.field_id  # FIXME: payload中已经有uid了
     data = []
     try:
         users = Follow.objects.filter(scholar_id=user_id)
     except Follow.DoesNotExist:
         return JsonResponse(data)
-    for i in range(len(users)):  # FIXME: for user in users
-        user_id = users[i].user_id  # FIXME: user_id = user.user.field_id
+    for user1 in users:  # FIXME: for user in users
+        user_id = user1.user_id  # FIXME: user_id = user.user.field_id
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -227,6 +228,80 @@ def getFollowers(request):
         bio = user.bio
         u_name = user.name
         data1 = {'id': user_id, 'username': u_name, 'bio': bio,
-                 'time': users[i].create_time}
+                 'time': user1.create_time}
         data.append(data1)
     return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def complainSochlar(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    scholar_id=request.POST.get('scholar_id')
+    reason=request.POST.get('reason')
+    scholar = Scholar.objects.filter(scholar_id=scholar_id).first()
+    if scholar is None:
+        return JsonResponse({'error':1,'message':"学者不存在"})
+    complain = Complainauthor()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.scholar=scholar
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+@csrf_exempt
+def complainComment(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    comment_id=request.POST.get('comment_id')
+    reported_id=request.POST.get('reported_id')
+    reported=User.objects.filter(field_id=reported_id).first()
+    if reported is None:
+        return JsonResponse({'error': 1, 'message': "被举报者不存在"})
+    reason=request.POST.get('reason')
+    comment = Comment.objects.filter(comment_id=comment_id).first()
+    if comment is None:
+        return JsonResponse({'error':1,'message':"评论不存在"})
+    complain = Complaincomment()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.comment=comment
+    complain.report=user
+    complain.reported=reported
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+@csrf_exempt
+def complainPaper(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    paper_id=request.POST.get('paper_id')
+    reason=request.POST.get('reason')
+    complain = Complainpaper()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.paper_id=paper_id
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+    
