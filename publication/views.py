@@ -425,3 +425,18 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    def getPaperByIdList(request):
+        try:
+            if request.method == 'POST':
+                para = eval(request.body)
+                idList = para['idList']
+                resp = publication.search_by_id_list(idList)
+                data = []
+                for h in resp:
+                    data.append(h['_source'])
+                return JsonResponse({'data':data})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
+
