@@ -24,7 +24,6 @@ urlpatterns = [
     path('getRecentRecord',getRecentRecord),
     path('getFavorites', getFavorites),
     path('newFavorites', newFavorites),
-    path('set_avatar/', set_avatar),
     path('getCollectFavorites', getCollectFavorites),
     path('collectFavorites', collectFavorites),
     path('getUserItemAll', getUserItemAll),
