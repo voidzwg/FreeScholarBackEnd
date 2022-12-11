@@ -38,4 +38,6 @@ urlpatterns = [
     path('getPendingScholarApplication', getPendingScholarApplication),
     path('ProcessRequest', processRequest),
     path('showFavorites', showFavorites),
+    path('getRecentRecord',getRecentRecord),
+
 ]
