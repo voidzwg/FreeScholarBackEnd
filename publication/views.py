@@ -1,3 +1,5 @@
+import datetime
+
 from django.shortcuts import render
 from django.http import JsonResponse
 import traceback
@@ -14,17 +16,17 @@ class publication:
                 para = eval(request.body)
                 list = para['condition']
                 for i in list:
-                    word=i['input']
+                    word = i['input']
                     field = Field.objects.filter(name=word).first()
                     if field is None:
                         field = Field()
-                        field.name=i['input']
-                        field.type=i['field']
+                        field.name = i['input']
+                        field.type = i['field']
                         field.count = 1
                         field.save()
                         field.SavingRatingWord()
                     else:
-                        field.count+=1
+                        field.count += 1
                         field.save()
                         field.SavingRatingWord()
                 return JsonResponse({'message': "成功"})
@@ -224,6 +226,7 @@ class publication:
                 traceback.print_exc()
         else:
             return JsonResponse({'errno': '1'})
+
     def HotPaper(request):
         if request.method == 'POST':
             try:
@@ -231,8 +234,9 @@ class publication:
                 paper_data = []
                 for i in Top_paper:
                     field_id = i[0].decode()
-                    paper=Paper.objects.get(field_id=field_id)
-                    paper_data.append({'paper_name': paper.paper_name})
+                    paper = Paper.objects.get(field_id=field_id)
+                    paper_data.append({'title': paper.paper_name, 'id': paper.paper_id, 'read_count': paper.read_count,
+                                       'like_count': paper.like_count, 'collect_count': paper.collect_count})
                 result = {
                     'paper': paper_data
                 }
@@ -262,6 +266,52 @@ class publication:
 
     def ReadPaper(request):
         if request.method == 'POST':
+            # # if request.method == 'POST':
+            # #     fail, payload = Authentication.authentication(request.META)
+            # #     if fail:
+            # #         return JsonResponse(payload)
+            # #     try:
+            # #         user_id = payload.get('id')
+            # #         user = User.objects.get(field_id=user_id)
+            #     except User.DoesNotExist:
+            #         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                paper_name = data_body.get('paper_name')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                comments = Comment.objects.filter(paper_id=paper_id)
+                comment_result = []
+                for comment in comments:
+                    tmp = {
+                        "avatar": comment.user.avatar,
+                        "username": comment.user.name,
+                        "text": comment.content
+                    }
+                    comment_result.append(tmp)
+                if paper is None:
+                    paper = Paper()
+                    paper.paper_id = paper_id
+                    paper.paper_name = paper_name
+                    paper.read_count = 1
+                    paper.like_count = 0
+                    paper.collect_count = 0
+                    paper.save()
+                    paper.save_paper_data()
+                else:
+                    paper.read_count += 1
+                    paper.save()
+                    paper.save_paper_data()
+                return JsonResponse(
+                    {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.read_count,
+                     'comment': comment_result})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def MakeComment(request):
+        if request.method == 'POST':
             if request.method == 'POST':
                 fail, payload = Authentication.authentication(request.META)
                 if fail:
@@ -271,29 +321,55 @@ class publication:
                     user = User.objects.get(field_id=user_id)
                 except User.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "用户不存在"})
-            try:
-                data_body = request.POST
-                paper_id = data_body.get('paper_id')
-                paper_name = data_body.get('paper_name')
-                paper = Paper.objects.filter(paper_id=paper_id).first()
-                if paper is None:
-                    paper = Paper()
-                    paper.paper_id = paper_id
-                    paper.paper_name = paper_name
-                    paper.read_count = 1
-                    paper.like_count = 0
-                    paper.collect_count = 0
-                    paper.save_paper_data()
-                    paper.save()
-                else:
-                    paper.read_count += 1
-                    paper.save_paper_data()
-                    paper.save()
-                return JsonResponse({'message': "阅读成功"})
-            except Exception as e:
-                traceback.print_exc()
+                try:
+                    data_body = request.POST
+                    paper_id = data_body.get('paper_id')
+                    content = data_body.get('content')
+                    paper = Paper.objects.filter(paper_id=paper_id).first()
+                    if paper is None:
+                        return JsonResponse({'error': 0, 'message': "文章不存在"})
+                    else:
+                        comment = Comment()
+                        comment.user = user
+                        comment.paper_id = paper_id
+                        comment.count = 0
+                        comment.content = content
+                        comment.create_time = datetime.datetime
+                        comment.save()
+                    return JsonResponse({'message': "评论成功"})
+                except Exception as e:
+                    traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
+    def LikeComment(request):
+        if request.method == 'POST':
+            if request.method == 'POST':
+                fail, payload = Authentication.authentication(request.META)
+                if fail:
+                    return JsonResponse(payload)
+                try:
+                    user_id = payload.get('id')
+                    user = User.objects.get(field_id=user_id)
+                except User.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+                try:
+                    data_body = request.POST
+                    comment_id=data_body.get('comment_id')
+                    like1 = Like1()
+                    like1.comment_id=comment_id
+                    like1.user=user
+                    like1.create_time=datetime.datetime
+                    like1.save()
+                    comment=Comment.objects.filter(comment_id=comment_id).first()
+                    if comment is None:
+                        return JsonResponse({'error':1, 'msg':"评论不存在"})
+                    comment.count+=1
+                    comment.save()
+                except Exception as e:
+                    traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
 
     def LikePaper(request):
         if request.method == 'POST':
@@ -335,7 +411,9 @@ class publication:
             try:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
+                favorites_id = data_body.get('favorites_id')
                 paper = Paper.objects.filter(paper_id=paper_id).first()
+                favorite = Favorites.objects.filter(favorites_id=favorites_id)
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
                 else:
@@ -345,13 +423,16 @@ class publication:
                     collection = Collection()
                     collection.paper_id = paper_id
                     collection.user = user
+                    collection.favorites = favorite
+                    collection.time = datetime.datetime
+                    favorite.count += 1
+                    favorite.save()
                     collection.save()
                 return JsonResponse({'message': "收藏成功"})
             except Exception as e:
                 traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
-
 
     def search_by_id_list(idList):
         body = {
@@ -364,6 +445,7 @@ class publication:
         resp = client.search(index='paper', body=body)
         hits = resp['hits']['hits']
         return hits
+
     def getVenueListByIdList(request):
         try:
             if request.method == 'POST':
@@ -411,14 +493,14 @@ class publication:
                 olist = []
                 for hit in hits:
                     for a in hit['_source']['authors']:
-                        if('org' in a):
+                        if ('org' in a):
                             list = a['org'].split(',')
                             for i in list:
-                                if('University' in i or 'Université' in i or '大学' in i):
+                                if ('University' in i or 'Université' in i or '大学' in i):
                                     i = i.strip()
                                     if not (i in olist):
                                         olist.append(i)
-                return JsonResponse({'data':olist})
+                return JsonResponse({'data': olist})
             else:
                 return JsonResponse({'errno': '1'})
         except Exception as e:
@@ -433,7 +515,7 @@ class publication:
                 data = []
                 for h in resp:
                     data.append(h['_source'])
-                return JsonResponse({'data':data})
+                return JsonResponse({'data': data})
             else:
                 return JsonResponse({'errno': '1'})
         except Exception as e:

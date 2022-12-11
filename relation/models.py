@@ -18,6 +18,7 @@ class Affiliation(models.Model):
     num_pubs_per_year = models.JSONField(blank=True, null=True)
     logo = models.TextField(blank=True, null=True)
     status = models.IntegerField(blank=True, null=True)
+    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -39,6 +40,7 @@ class Collection(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING)
     paper_id = models.TextField(blank=True, null=True)
     time = models.DateTimeField(blank=True, null=True)
+    favorites = models.ForeignKey('Favorites', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -186,9 +188,22 @@ class Notice(models.Model):
         db_table = 'Notice'
 
 
+class Paper(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    paper_id = models.TextField(blank=True, null=True)
+    like_count = models.IntegerField(blank=True, null=True)
+    collect_count = models.IntegerField(blank=True, null=True)
+    paper_name = models.CharField(max_length=255, blank=True, null=True)
+    read_count = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Paper'
+
+
 class Scholar(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    user = models.ForeignKey('User', models.DO_NOTHING)
+    user = models.ForeignKey('User', models.DO_NOTHING, related_name="user")
     name = models.CharField(max_length=255, blank=True, null=True)
     affi = models.JSONField(blank=True, null=True)
     field = models.CharField(max_length=255, blank=True, null=True)
@@ -196,6 +211,7 @@ class Scholar(models.Model):
     claim_time = models.DateTimeField(blank=True, null=True)
     author_id = models.TextField(blank=True, null=True)
     status = models.IntegerField(blank=True, null=True)
+    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True, related_name="admin")
 
     class Meta:
         managed = False

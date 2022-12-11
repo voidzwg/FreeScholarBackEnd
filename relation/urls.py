@@ -19,15 +19,24 @@ urlpatterns = [
     path('getScholarItem', getScholarItem),
     path('editInfo', editInfo),
     path('changePwd', changePwd),
-
     path('getReportAll',getReportAll),
     path('getComplainAll',getComplainAll),
     path('getRecentRecord',getRecentRecord),
-
     path('getFavorites', getFavorites),
     path('newFavorites', newFavorites),
-    path('set_avatar/', set_avatar),
     path('getCollectFavorites', getCollectFavorites),
     path('collectFavorites', collectFavorites),
+    path('getUserItemAll', getUserItemAll),
+    path('getAllAccusationRecords', getAllAccusationRecords),
+    path('getAllAppealRecords', getAllAppealRecords),
+    path('getAllInstitutionApplication', getAllInstitutionApplication),
+    path('getAllScholarApplication', getAllScholarApplication),
+    path('getPendingAccusationRecords', getPendingAccusationRecords),
+    path('getPendingAppealRecords', getPendingAppealRecords),
+    path('getPendingInstitutionApplication', getPendingInstitutionApplication),
+    path('getPendingScholarApplication', getPendingScholarApplication),
+    path('processRequest', processRequest),
+    path('showFavorites', showFavorites),
+    path('getRecentRecord',getRecentRecord),
 
 ]

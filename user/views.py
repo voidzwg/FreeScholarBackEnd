@@ -1,3 +1,4 @@
+import datetime
 import traceback
 
 # publish/views.py
@@ -5,9 +6,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django_redis import get_redis_connection
 
-from user.models import User, Scholar, Follow
+from user.models import *
 from utils.Token import Authentication
 from utils.media import *
+from utils.superuser import ADMIN
 
 token_expire = 60 * 60 * 1
 r = get_redis_connection()
@@ -16,7 +18,7 @@ r = get_redis_connection()
 @csrf_exempt  # 跨域设置
 def register(request):  # 继承请求类
     if request.method != 'POST':
-        return JsonResponse({'errno': 0, 'msg': "请求方式错误"})
+        return JsonResponse({'errno': -1, 'msg': "请求方式错误"})
     # 判断请求方式是否为 POST
     try:
         data_body = request.POST
@@ -27,7 +29,7 @@ def register(request):  # 继承请求类
 
         new_user = User()
         if len(username) > 10:
-            return JsonResponse({'errno': 0, 'msg': "用户名过长"})
+            return JsonResponse({'errno': -2, 'msg': "用户名过长"})
 
         new_user.name = username
 
@@ -35,34 +37,36 @@ def register(request):  # 继承请求类
             JsonResponse({'errno': 0, 'msg': "用户名含有非法字符"})
 
         if User.objects.filter(name=username).exists():
-            return JsonResponse({'errno': 0, 'msg': "用户名已被使用"})
+            return JsonResponse({'errno': -3, 'msg': "用户名已被使用"})
 
         new_user.mail = email
         print(email)
         if not new_user.validate_email():
-            return JsonResponse({'errno': 0, 'msg': "邮箱不合法"})
+            return JsonResponse({'errno': -4, 'msg': "邮箱不合法"})
         # if User.objects.filter(mail=email).exists():
         #     return JsonResponse({'errno': 0, 'msg': "邮箱已被使用"})
 
         if len(password_1) < 5 or len(password_1) > 18:
-            return JsonResponse({'errno':
-                                     0, 'msg': "密码长度不合法"})
+            return JsonResponse({'errno': -5, 'msg': "密码长度不合法"})
 
         if password_1 != password_2:
-            return JsonResponse({'errno': 0, 'msg': "两次输入的密码不同"})
+            return JsonResponse({'errno': -6, 'msg': "两次输入的密码不同"})
 
         new_user.pwd = password_1
 
         if not new_user.validate_password():
-            return JsonResponse({'errno': 0, 'msg': "密码类型不合法"})
+            return JsonResponse({'errno': -7, 'msg': "密码类型不合法"})
 
             # 新建 Author 对象，赋值用户名和密码保存
 
         # id 是自动复制，不需要指明
         # 设置头像为默认头像
         new_user.avatar = DEFAULT_AVATAR
+        new_user.identity = 1
+        new_user.state = 0
+        new_user.gender = 0
         new_user.save()
-        return JsonResponse({'errno': 1, 'msg': "注册成功"})
+        return JsonResponse({'errno': 0, 'msg': "注册成功"})
     except Exception as e:
         traceback.print_exc()
 
@@ -79,8 +83,12 @@ def login(request):
     except User.DoesNotExist:
         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
 
+    if user.state == 2:
+        return JsonResponse({'errno': 2, 'msg': "用户已被封禁"})
+
     if user.pwd == password:
-        token = Authentication.create_token(user.field_id)
+        is_admin = (user.field_id in ADMIN)
+        token = Authentication.create_token(user.field_id, admin=is_admin)
         user_info = {
             'errno': 0,
             'name': user.name,
@@ -88,6 +96,7 @@ def login(request):
             'profile': user.bio,
             'avatar': user.avatar,
             'token': token,
+            'isAdmin': is_admin
         }
         return JsonResponse(user_info)
     else:
@@ -211,15 +220,15 @@ def getFollowers(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
+    user_id=payload.get('id')
     user = User.objects.get(field_id=payload.get('id'))
-    user_id = user.field_id  # FIXME: payload中已经有uid了
     data = []
     try:
         users = Follow.objects.filter(scholar_id=user_id)
     except Follow.DoesNotExist:
         return JsonResponse(data)
-    for i in range(len(users)):  # FIXME: for user in users
-        user_id = users[i].user_id  # FIXME: user_id = user.user.field_id
+    for user1 in users:  # FIXME: for user in users
+        user_id = user1.user_id  # FIXME: user_id = user.user.field_id
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -227,6 +236,80 @@ def getFollowers(request):
         bio = user.bio
         u_name = user.name
         data1 = {'id': user_id, 'username': u_name, 'bio': bio,
-                 'time': users[i].create_time}
+                 'time': user1.create_time}
         data.append(data1)
     return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def complainSochlar(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    scholar_id=request.POST.get('scholar_id')
+    reason=request.POST.get('reason')
+    scholar = Scholar.objects.filter(scholar_id=scholar_id).first()
+    if scholar is None:
+        return JsonResponse({'error':1,'message':"学者不存在"})
+    complain = Complainauthor()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.scholar=scholar
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+@csrf_exempt
+def complainComment(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    comment_id=request.POST.get('comment_id')
+    reported_id=request.POST.get('reported_id')
+    reported=User.objects.filter(field_id=reported_id).first()
+    if reported is None:
+        return JsonResponse({'error': 1, 'message': "被举报者不存在"})
+    reason=request.POST.get('reason')
+    comment = Comment.objects.filter(comment_id=comment_id).first()
+    if comment is None:
+        return JsonResponse({'error':1,'message':"评论不存在"})
+    complain = Complaincomment()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.comment=comment
+    complain.report=user
+    complain.reported=reported
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+@csrf_exempt
+def complainPaper(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
+    paper_id=request.POST.get('paper_id')
+    reason=request.POST.get('reason')
+    complain = Complainpaper()
+    complain.user=user
+    complain.create_time=datetime.datetime
+    complain.audit_time=datetime.datetime
+    complain.status=0
+    complain.paper_id=paper_id
+    complain.reason=reason
+    complain.save()
+    return JsonResponse({'errno':0,'msg':"success"})
+
+    

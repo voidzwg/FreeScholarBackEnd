@@ -15,3 +15,4 @@ urlpatterns = [
     path('getPaperByIdList/',views.publication.getPaperByIdList),
     path('addPub/',views.publication.addPub),
 ]
+

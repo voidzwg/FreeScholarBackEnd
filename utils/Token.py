@@ -19,6 +19,7 @@ class Authentication:
             'admin': admin,
             'exp': token_expire
         }
+        print(payload)
         token_obj = cls.generate_jwt_token(payload)
         cls.redis_connection.set(uid, token_obj)
         return token_obj
@@ -42,9 +43,6 @@ class Authentication:
         if token is None or token == "":
             return True, fail_json_msg2
         payload = cls.verify_jwt_token(token)
-        print(payload)
-        print(int(time.time()))
-
         if payload is None:
             return True, fail_json_msg
         elif int(payload.get('exp')) < int(time.time()):

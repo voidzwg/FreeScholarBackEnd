@@ -3,22 +3,35 @@ import datetime
 import traceback
 import os.path
 import simplejson
+from django.core import serializers
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from relation.models import *
 from utils.Token import Authentication
 from utils.media import *
-
+from publication.views import publication
+from FreeScholarBackEnd.settings import SECRETS
 
 @csrf_exempt
 def test(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
-            follow = Follow.objects.all()
-        except Follow.DoesNotExist:
-            return JsonResponse({'errno': 1, 'msg': "删除失败"})
-        return JsonResponse({'errno': len(follow)})
+            data = []
+            req = simplejson.loads(request.body)
+            content = req['input']
+            users = User.objects.filter(name__icontains=content)
+            for i in range(len(users)):
+                user_id = users[i].field_id
+                name = users[i].name
+                mail = users[i].mail
+                avatar = users[i].avatar
+                state = users[i].state
+                data1 = {'id': user_id, 'name': name, 'mail': mail, 'avatar': avatar, 'state': state}
+                data.append(data1)
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -45,10 +58,10 @@ def getBaseInfo(request):
         gender = user.gender
         login_date = user.login_date
         try:
-            scholar = Scholar.objects.get(user_id=user_id, status=1)
+            scholar = Scholar.objects.get(user_id=user_id, status=2)
+            affi = scholar.affi
         except Scholar.DoesNotExist:
-            return JsonResponse({'errno': 1, 'msg': "该用户不是学者"})
-        affi = scholar.affi
+            affi = None
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
@@ -70,7 +83,7 @@ def getBaseInfo(request):
                 counts += 0
         return JsonResponse({'username': u_name, 'avatar': avatar, 'institution': affi, 'bio': bio,
                              'follows': user_count, 'followers': scholar_count, 'likes': counts
-                             , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
+                                , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
                                 , 'gender': gender, 'login_date': login_date})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -91,7 +104,7 @@ def getFollows(request):
         for i in range(len(users)):
             scholar_id = users[i].scholar_id
             try:
-                scholar = Scholar.objects.get(field_id=scholar_id, status=1)
+                scholar = Scholar.objects.get(field_id=scholar_id, status=2)
             except Scholar.DoesNotExist:
                 continue
             user_id = scholar.user_id
@@ -105,7 +118,7 @@ def getFollows(request):
             avatar = user.avatar
 
             data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
-                , 'avatar': avatar, 'bio': bio,'time': users[i].create_time}
+                , 'avatar': avatar, 'bio': bio, 'time': users[i].create_time}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
@@ -204,9 +217,16 @@ def like(request):
 
 @csrf_exempt
 def getUser(request):
-    if request.method == 'GET':
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'POST':
         data = []
-        users = User.objects.all()
+        req = simplejson.loads(request.body)
+        content = req['input']
+        users = User.objects.filter(name__icontains=content)
         for i in range(len(users)):
             user_id = users[i].field_id
             name = users[i].name
@@ -222,11 +242,14 @@ def getUser(request):
 
 @csrf_exempt
 def setNormal(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        user_id = payload.get('id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -240,11 +263,14 @@ def setNormal(request):
 
 @csrf_exempt
 def setMute(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        user_id = payload.get('id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -258,11 +284,14 @@ def setMute(request):
 
 @csrf_exempt
 def setBan(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        user_id = payload.get('id')
+        req = simplejson.loads(request.body)
+        user_id = req['_id']
         try:
             user = User.objects.get(field_id=user_id)
         except User.DoesNotExist:
@@ -276,17 +305,22 @@ def setBan(request):
 
 @csrf_exempt
 def getNum(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             user = len(User.objects.all())
         except User.DoesNotExist:
             user = 0
         try:
-            admin = len(User.objects.filter(identity=3))
+            admin = len(SECRETS.get('ADMIN'))
         except User.DoesNotExist:
             admin = 0
         try:
-            scholar = len(Scholar.objects.filter(status=1))
+            scholar = len(Scholar.objects.filter(status=2))
         except Scholar.DoesNotExist:
             scholar = 0
         return JsonResponse({'userNum': user, 'scholarNum': scholar, 'adminNum': admin})
@@ -296,6 +330,11 @@ def getNum(request):
 
 @csrf_exempt
 def getUserItem(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Affiliation.objects.filter(status=0))
@@ -312,6 +351,11 @@ def getUserItem(request):
 
 
 def getReportAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Complaincomment.objects.filter(status=1))
@@ -329,6 +373,11 @@ def getReportAll(request):
 
 @csrf_exempt
 def getComplainAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num = len(Complainpaper.objects.filter(status=1))
@@ -341,25 +390,98 @@ def getComplainAll(request):
 
 @csrf_exempt
 def getRecentRecord(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
-            Complainpaper.objects.all.order_by('-create_time')
-            Complaincomment.objects.all.order_by('-create_time')
-            Complainauthor.objects.all.order_by('-create_time')
-        except Complainpaper.DoesNotExist:
-            num1 = 0
-        try:
-            num2 = len(Complainauthor.objects.filter(status=0))
-        except Complainauthor.DoesNotExist:
-            num2 = 0
-        num = num1 + num2
-        return JsonResponse({'num': num})
+            Complainpaper.objects.order_by('-audit_time')
+            Complaincomment.objects.order_by('-audit_time')
+            Complainauthor.objects.order_by('-audit_time')
+            list1 = []
+            list2 = []
+            list3 = []
+            count = 0
+            dict = {}
+            for complainpaper in Complainpaper.objects.all():
+                if complainpaper.audit_time is not None:
+                    dict[complainpaper.audit_time] = complainpaper.field_id
+                list1.append(complainpaper)
+                count += 1
+                if count > 5:
+                    break
+            for complaincomment in Complaincomment.objects.all():
+                if complaincomment.audit_time is not None:
+                    dict[complaincomment.audit_time] = complaincomment.field_id
+                list2.append(complaincomment)
+                count += 1
+                if count > 5:
+                    break
+            for complainauthor in Complainauthor.objects.all():
+                if complainauthor.audit_time is not None:
+                    dict[complainauthor.audit_time] = complainauthor.field_id
+                list3.append(complainauthor)
+                count += 1
+                if count > 5:
+                    break
+            result = []
+            keys = list(dict.keys())
+            keys.sort(reverse=False)
+            for key in keys:
+                for i in list1:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 0
+                        else:
+                            type = 2
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                for i in list2:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 1
+                        else:
+                            type = 3
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                for i in list3:
+                    if i.audit_time == key:
+                        if i.status == 0:
+                            type = 0
+                        else:
+                            type = 2
+                        tmp = {
+                            'type': type,
+                            'id': i.field_id
+                        }
+                        result.append(tmp)
+                count += 1
+                if count > 5:
+                    break
+
+            return JsonResponse({'result': result})
+        except Exception as e:
+            traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
+
 @csrf_exempt
 def getScholarItem(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'GET':
         try:
             num1 = len(Complainpaper.objects.filter(status=0))
@@ -428,7 +550,6 @@ def changePwd(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
-
 @csrf_exempt
 def getFavorites(request):
     if request.method == 'GET':
@@ -476,37 +597,6 @@ def newFavorites(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
-def set_avatar(request):
-    if request.method == 'POST':
-        fail, payload = Authentication.authentication(request.META)
-        if fail:
-            return JsonResponse(payload)
-        uid = payload.get('id')
-        avatar = request.FILES.get('avatar')
-        if avatar is None or avatar == '':
-            return JsonResponse({'errno': -1, 'msg': "头像不能为空"})
-        if not avatar.name.lower().endswith(IMAGE_TAIL):
-            return JsonResponse({'errno': -2, 'msg': "文件格式错误"})
-        try:
-            user = User.objects.get(field_id=uid)
-        except Exception as e:
-            print(e)
-            return JsonResponse({'errno': -3, 'msg': "用户不存在"})
-        avatar_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(uid) + '_' + avatar.name
-        try:
-            user.avatar = avatar_name
-            user.save()
-        except Exception as e:
-            print(e)
-            return JsonResponse({'errno': -4, 'msg': "未知错误"})
-        f = open(os.path.join(settings.MEDIA_ROOT, 'avatars', avatar_name), 'wb')
-        for i in avatar.chunks():
-            f.write(i)
-        f.close()
-        return JsonResponse({'errno': 0, 'msg': "上传成功"})
-    return JsonResponse({'errno': 1001, 'msg': "请求方式错误"})
-
-
 @csrf_exempt
 def getCollectFavorites(request):
     if request.method == 'GET':
@@ -544,11 +634,347 @@ def collectFavorites(request):
             user_id = payload.get('id')
             req = simplejson.loads(request.body)
             favorites_id = req['favorites_id']
-            favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
-            favorite.save()
-            return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+            try:
+                Collectfavorites.objects.get(favorites_id=favorites_id, user_id=user_id)
+            except Collectfavorites.DoesNotExist:
+                favorite = Collectfavorites(favorites_id=favorites_id, user_id=user_id)
+                favorite.save()
+                return JsonResponse({'errno': 0, 'msg': "收藏成功"})
+            return JsonResponse({'errno': 1, 'msg': "已经收藏该收藏夹"})
         except Exception as e:
             traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+
+@csrf_exempt
+def getUserItemAll(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        # fail, payload = Authentication.authentication(request.META)
+        # if fail:
+        #     return JsonResponse(payload)
+        # user_id = payload.get('id')
+        try:
+            num1 = len(Affiliation.objects.filter(status=1))
+        except Affiliation.DoesNotExist:
+            num1 = 0
+        try:
+            num2 = len(Scholar.objects.filter(status=1))
+        except Scholar.DoesNotExist:
+            num2 = 0
+        num = num1+num2
+        return JsonResponse({'num': num})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getAllAccusationRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        try:
+            data = []
+            try:
+                res1 = Complaincomment.objects.all()
+            except Complaincomment.DoesNotExist:
+                res1 = None
+            res1 = serializers.serialize("json", res1, ensure_ascii=False)
+            res1 = simplejson.loads(res1)
+            data.append(res1)
+            try:
+                res2 = Complainauthor.objects.all()
+            except Complainauthor.DoesNotExist:
+                res2 = None
+            res2 = serializers.serialize("json", res2, ensure_ascii=False)
+            res2 = simplejson.loads(res2)
+            data.append(res2)
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getAllAppealRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Complainpaper.objects.all()
+        except Complainpaper.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getAllInstitutionApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Affiliation.objects.all()
+        except Affiliation.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getAllScholarApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Scholar.objects.all()
+        except Scholar.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getPendingAccusationRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        try:
+            data = []
+            try:
+                res1 = Complaincomment.objects.filter(status=0)
+            except Complaincomment.DoesNotExist:
+                res1 = None
+            res1 = serializers.serialize("json", res1, ensure_ascii=False)
+            res1 = simplejson.loads(res1)
+            data.append(res1)
+            try:
+                res2 = Complainauthor.objects.filter(status=0)
+            except Complainauthor.DoesNotExist:
+                res2 = None
+            res2 = serializers.serialize("json", res2, ensure_ascii=False)
+            res2 = simplejson.loads(res2)
+            data.append(res2)
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def getPendingAppealRecords(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Complainpaper.objects.filter(status=0)
+        except Complainpaper.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getPendingInstitutionApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Affiliation.objects.filter(status=0)
+        except Affiliation.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getPendingScholarApplication(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        try:
+            res1 = Scholar.objects.filter(status=0)
+        except Scholar.DoesNotExist:
+            res1 = None
+        res1 = serializers.serialize("json", res1, ensure_ascii=False)
+        res1 = simplejson.loads(res1)
+        data.append(res1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+@csrf_exempt
+def processRequest(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'POST':
+        try:
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            user_id = payload.get('id')
+            type1 = request.POST.get('type')
+            _id = request.POST.get('id')
+            res = request.POST.get('agreeOrRefuse')
+            reply = request.POST.get('reply')
+            if type1 == "0":
+                try:
+                    obj = Complaincomment.objects.get(field_id=_id)
+                except Complaincomment.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
+                curr_time = datetime.datetime.now()
+                time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+                if res:
+                    obj.status = 2
+                else:
+                    obj.status = 1
+                obj.audit_time = time_str
+                obj.reply = reply
+                obj.save()
+            elif type1 == "1":
+                try:
+                    obj = Complainauthor.objects.get(field_id=_id)
+                except Complainauthor.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
+                curr_time = datetime.datetime.now()
+                time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+                if res:
+                    obj.status = 2
+                else:
+                    obj.status = 1
+                obj.audit_time = time_str
+                obj.reply = reply
+                obj.save()
+            elif type1 == "2":
+                try:
+                    obj = Complainpaper.objects.get(field_id=_id)
+                except Complainpaper.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
+                curr_time = datetime.datetime.now()
+                time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
+                if res:
+                    obj.status = 2
+                else:
+                    obj.status = 1
+                obj.audit_time = time_str
+                obj.reply = reply
+                obj.save()
+            elif type1 == "3":
+                try:
+                    obj = Affiliation.objects.get(field_id=_id)
+                except Affiliation.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
+                if res:
+                    obj.status = 2
+                else:
+                    obj.status = 1
+                obj.admin_id = user_id
+                obj.save()
+            elif type1 == "4":
+                try:
+                    obj = Scholar.objects.get(field_id=_id)
+                except Scholar.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
+                if res:
+                    obj.status = 2
+                else:
+                    obj.status = 1
+                obj.admin_id = user_id
+                obj.save()
+            return JsonResponse({'errno': 0, 'msg': "处理成功"})
+        except Exception as e:
+            traceback.print_exc()
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def showFavorites(request):
+    if request.method == 'GET':
+        data = []
+        pid = []
+        favorites_id = request.GET['favorites_id']
+        try:
+            res = Collection.objects.filter(favorites=favorites_id)
+        except Collection.DoesNotExist:
+            res = None
+        for i in range(len(res)):
+            pid.append(res[i].paper_id)
+        papers = publication.search_by_id_list(pid)
+        for i in range(len(res)):
+            try:
+                col = Paper.objects.get(paper_id=res[i].paper_id)
+            except Paper.DoesNotExist:
+                col = None
+                like_count = 0
+                read_count = 0
+                collect_count = 0
+            if col is not None:
+                like_count = col.like_count
+                read_count = col.read_count
+                collect_count = col.collect_count
+            data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
+                     'paper': papers[i]}
+            data.append(data1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
 
