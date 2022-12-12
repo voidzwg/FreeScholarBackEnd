@@ -234,7 +234,9 @@ class publication:
                 paper_data = []
                 for i in Top_paper:
                     field_id = i[0].decode()
-                    paper = Paper.objects.get(field_id=field_id)
+                    paper = Paper.objects.filter(field_id=field_id).first()
+                    if paper is None:
+                        continue
                     paper_data.append({'title': paper.paper_name, 'id': paper.paper_id, 'read_count': paper.read_count,
                                        'like_count': paper.like_count, 'collect_count': paper.collect_count})
                 result = {

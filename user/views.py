@@ -344,4 +344,19 @@ def sendEmail(request):
     except Exception as e:
         traceback.print_exc()
 
-    
+@csrf_exempt
+def checkCode(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    try:
+        data_body = request.POST
+
+        code = data_body.get('code')
+        emailCode=EmailCode.objects.filter(emailcode=code).first()
+        if emailCode is None:
+            return JsonResponse({'error':1,'msg':"验证码错误"})
+        else:
+            emailCode.delete()
+            return JsonResponse({'msg':"验证码正确"})
+    except Exception as e:
+        traceback.print_exc()

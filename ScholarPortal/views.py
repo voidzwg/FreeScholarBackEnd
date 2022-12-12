@@ -19,6 +19,7 @@ class GetBaseInfo(View):
             "userMajor": scholar.field,
             "visitors": portal.count,
             "heat": scholar.hot_index,
-            "institution": scholar.affi
+            "institution": scholar.affi,
+            "Hotpoint":portal.count*347+443*(portal+1)+666
         }
         return JsonResponse(json_data, safe=False)
