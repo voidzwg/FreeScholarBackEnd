@@ -1,18 +1,16 @@
 # publish/views.py
 import datetime
 import traceback
-import os.path
+
 import simplejson
 from django.core import serializers
-import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from FreeScholarBackEnd.settings import SECRETS
+from publication.views import publication
 from relation.models import *
 from utils.Token import Authentication
-from utils.media import *
-from publication.views import publication
-from FreeScholarBackEnd.settings import SECRETS
 
 
 @csrf_exempt
@@ -243,8 +241,6 @@ def getUser(request):
         return JsonResponse(payload)
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
-    json_file = open("../secrets.json")
-    SECRETS = json.load(json_file)
     if request.method == 'POST':
         data = []
         req = simplejson.loads(request.body)
@@ -252,7 +248,7 @@ def getUser(request):
         users = User.objects.filter(name__icontains=content)
         for i in range(len(users)):
             user_id = users[i].field_id
-            if str(user_id) in list(map(str, SECRETS.get("ADMIN"))):
+            if user_id in SECRETS.get("ADMIN"):
                 continue
             name = users[i].name
             mail = users[i].mail
