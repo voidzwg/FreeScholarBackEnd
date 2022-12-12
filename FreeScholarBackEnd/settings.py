@@ -180,3 +180,10 @@ CACHES = {
 }
 
 client = Elasticsearch('http://139.9.134.209:9200')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'  # 腾讯QQ邮箱 SMTP 服务器地址
+EMAIL_PORT = 25  # SMTP服务的端口号
+EMAIL_HOST_USER = '810607510@qq.com'  # 你的qq邮箱，邮件发送者的邮箱
+EMAIL_HOST_PASSWORD = 'rywxwagwjpscbfeg'
+EMAIL_USE_TLS = False
