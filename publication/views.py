@@ -177,7 +177,17 @@ class publication:
                             }
                         }
                         filters.append(fq)
-
+                sort = []
+                if 'sort' in para:
+                    if para['sort'] == 'time':
+                        s = {
+                            "year":{"order":"desc"}
+                        }
+                    elif para['sort'] == 'citation':
+                        s = {
+                            "n_citation":{"order":"desc"}
+                        }
+                    sort.append(s)
                 body = {
                     "query": {
                         "function_score": {
@@ -216,7 +226,7 @@ class publication:
                         },
 
                     },
-
+                    "sort":sort,
                     "from": str(page),
                     "size": 20,
                     "min_score": 5
@@ -443,7 +453,9 @@ class publication:
                 "terms": {
                     "id": idList
                 }
-            }
+            },
+            "from":0,
+            "size":10000,
         }
         resp = client.search(index='paper', body=body)
         hits = resp['hits']['hits']
