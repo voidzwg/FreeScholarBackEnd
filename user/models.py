@@ -65,8 +65,8 @@ class Complainauthor(models.Model):
 
 class Complaincomment(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    report = models.ForeignKey('User', models.DO_NOTHING,related_name='report')
-    reported = models.ForeignKey('User', models.DO_NOTHING,related_name='reported')
+    report = models.ForeignKey('User', models.DO_NOTHING, related_name='report')
+    reported = models.ForeignKey('User', models.DO_NOTHING, related_name='reported')
     comment = models.ForeignKey(Comment, models.DO_NOTHING)
     reason = models.TextField(blank=True, null=True)
     create_time = models.DateTimeField(blank=True, null=True)
@@ -139,8 +139,8 @@ class Like1(models.Model):
 
 class Message(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    owner = models.ForeignKey('User', models.DO_NOTHING,related_name='owner')
-    sender = models.ForeignKey('User', models.DO_NOTHING,related_name='sender')
+    owner = models.ForeignKey('User', models.DO_NOTHING, related_name='owner')
+    sender = models.ForeignKey('User', models.DO_NOTHING, related_name='sender')
     content = models.TextField(blank=True, null=True)
     create_time = models.DateTimeField(blank=True, null=True)
     is_read = models.IntegerField(blank=True, null=True)
@@ -360,3 +360,12 @@ class DjangoSession(models.Model):
     class Meta:
         managed = False
         db_table = 'django_session'
+
+
+class EmailCode(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)
+    emailcode = models.CharField(max_length=255)
+
+    class Meta:
+        managed = False
+        db_table = 'EmailCode'
