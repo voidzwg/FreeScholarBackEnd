@@ -457,19 +457,25 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name': i.,
-                                'avatar': i.user.user.avatar
+                                'name':"admin"
                             }
                         result.append(tmp)
                 for i in list2:
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 1
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name': i.user.user.name,
+                                'avatar': i.user.user.avatar
+                            }
                         else:
                             type = 3
                         tmp = {
                             'type': type,
-                            'id': i.field_id
+                            'id': i.field_id,
+                            'name':"admin",
                         }
                         result.append(tmp)
                 for i in list3:
