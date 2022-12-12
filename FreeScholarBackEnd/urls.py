@@ -30,5 +30,6 @@ urlpatterns = [
     path('api/MessageCenter/', include('MessageCenter.urls')),
     path('api/author/', include('author.urls')),
     path('api/media/', include('Files.urls')),
+    path('api/serialization/', include('serialization.urls')),
     re_path('media/(?P<path>.*)', serve, {'document_root': MEDIA_ROOT}),
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)
