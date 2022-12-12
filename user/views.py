@@ -318,10 +318,10 @@ def complainPaper(request):
 def sendEmail(request):
     if request.method != 'POST':
         return JsonResponse({'result': 0, 'msg': "请求方式错误"})
-    # fail, payload = Authentication.authentication(request.META)
-    # if fail:
-    #     return JsonResponse(payload)
-    # user = User.objects.get(field_id=payload.get('id'))
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
     try:
         data_body=request.POST
 
@@ -334,7 +334,7 @@ def sendEmail(request):
         #     result = {'result': 0, 'msg': "邮箱已被使用"}
         #     print(result)
         #     return JsonResponse(result)
-        send_result = sendCodeEmail(email)
+        send_result = sendCodeEmail(email,user.field_id)
         if send_result == 0:
             result = {'result': 0, 'msg': '发送失败!请检查邮箱格式'}
         else:
@@ -348,15 +348,18 @@ def sendEmail(request):
 def checkCode(request):
     if request.method != 'POST':
         return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
     try:
         data_body = request.POST
 
         code = data_body.get('code')
-        emailCode=EmailCode.objects.filter(emailcode=code).first()
-        if emailCode is None:
+        e=CheckCode(code,user.field_id)
+        if e is False:
             return JsonResponse({'error':1,'msg':"验证码错误"})
         else:
-            emailCode.delete()
             return JsonResponse({'msg':"验证码正确"})
     except Exception as e:
         traceback.print_exc()

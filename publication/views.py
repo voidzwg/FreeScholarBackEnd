@@ -278,7 +278,8 @@ class publication:
             #     except User.DoesNotExist:
             #         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
-                data_body = request.POST
+                data = request.body.decode()
+                data_body=json.loads(data)
                 paper_id = data_body.get('paper_id')
                 paper_name = data_body.get('paper_name')
                 paper = Paper.objects.filter(paper_id=paper_id).first()

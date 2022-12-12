@@ -363,7 +363,7 @@ class DjangoSession(models.Model):
 
 
 class EmailCode(models.Model):
-    field_id = models.AutoField(db_column='_id', primary_key=True)
+    field_id = models.AutoField(db_column='id', primary_key=True)
     emailcode = models.CharField(max_length=255)
 
     class Meta:
