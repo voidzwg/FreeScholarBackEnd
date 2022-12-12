@@ -7,6 +7,7 @@ from utils.Token import Authentication
 from publication.models import *
 from utils import Rating
 from FreeScholarBackEnd.settings import *
+import uuid
 
 class publication:
 
@@ -521,9 +522,58 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    def getPaperById(request):
+        try:
+            if request.method == 'POST':
+
+                id = request.POST.get('id')
+                body = {
+                    "query": {
+                        "term": {
+                            "id": id
+                        }
+                    }
+                }
+                resp = client.search(index='paper', body=body)
+                if resp['hits']['total']['value'] > 0:
+                    return JsonResponse({'paper': resp['hits']['hits'][0]['_source']})
+            else:
+                return JsonResponse({'errno': '1'})
+        except Exception as e:
+            traceback.print_exc()
     def addPub(request):
         try:
             if request.method == 'POST':
+                para = eval(request.body)
+                id = uuid.uuid1()
+                document = {
+                    "id":id,
+                    "title":para['title'],
+                    "authors":para['authors'],
+                }
+                print(para)
+                if "abstract" in para:
+                    document["abstract"] = para['abstract']
+                elif "year" in para:
+                    document["year"] = para["year"]
+                elif "url" in para:
+                    document["url"] = para["year"]
+                elif "venue" in para:
+                    document["venue"] = para["venue"]
+                elif "keywords" in para:
+                    document["keywords"] = para["keywords"]
+                elif "n_citation" in para:
+                    document["n_citation"] = para["n_citation"]
+                elif "lang" in para:
+                    document["lang"] = para["lang"]
+                elif "doi" in para:
+                    document["doi"] = para["doi"]
+                elif "issn" in para:
+                    document["issn"] = para["issn"]
+                elif "pdf" in para:
+                    document["pdf"] = para["pdf"]
+                print(document)
+                #resp = client.index(index='paper',document=document)
                 return JsonResponse({'resp':1})
             else:
                 return JsonResponse({'errno': '1'})
