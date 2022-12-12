@@ -8,4 +8,5 @@ urlpatterns = [
     path('user/', Serialization.as_view(model=User, slist=['name', 'mail', 'avatar', 'state', 'gender', 'bio'])),
     path('scholar/', Serialization.as_view(model=Scholar, slist=['name', 'field'])),
     path('comment/', Serialization.as_view(model=Comment, slist=['content', 'count', 'create_time'])),
+    path('viewHistory/', Serialization.as_view(model=Viewhistory, slist=['field', 'user_id', 'paper_id', 'time'])),
 ]
