@@ -19,23 +19,30 @@ from FreeScholarBackEnd.settings import SECRETS
 def test(request):
     if request.method == 'GET':
         try:
-            json_file = open("../secrets.json")
-            SECRETS = json.load(json_file)
             data = []
-            req = simplejson.loads(request.body)
-            content = req['input']
-            users = User.objects.filter(name__icontains=content)
-            if "21" in SECRETS.get("ADMIN"):
-                return JsonResponse({'errno': 1})
-            for i in range(len(users)):
-                user_id = users[i].field_id
-                if str(user_id) in list(map(str, SECRETS.get("ADMIN"))):
-                    continue
-                name = users[i].name
-                mail = users[i].mail
-                avatar = users[i].avatar
-                state = users[i].state
-                data1 = {'id': user_id, 'name': name, 'mail': mail, 'avatar': avatar, 'state': state}
+            pid = []
+            favorites_id = request.GET['favorites_id']
+            try:
+                res = Collection.objects.filter(favorites=favorites_id)
+            except Collection.DoesNotExist:
+                res = None
+            for i in range(len(res)):
+                pid.append(res[i].paper_id)
+            papers = publication.search_by_id_list(pid)
+            for i in range(len(res)):
+                try:
+                    col = Paper.objects.get(paper_id=res[i].paper_id)
+                except Paper.DoesNotExist:
+                    col = None
+                    like_count = 0
+                    read_count = 0
+                    collect_count = 0
+                if col is not None:
+                    like_count = col.like_count
+                    read_count = col.read_count
+                    collect_count = col.collect_count
+                data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
+                         'paper': papers[i]}
                 data.append(data1)
             return JsonResponse(data, safe=False)
         except Exception as e:
@@ -142,7 +149,11 @@ def getFollowers(request):
         user_id = payload.get('id')
         data = []
         try:
-            users = Follow.objects.filter(scholar_id=user_id)
+            scholar_id = Scholar.objects.get(user_id=user_id).field_id
+        except Scholar.DoesNotExist:
+            return JsonResponse(data)
+        try:
+            users = Follow.objects.filter(scholar_id=scholar_id)
         except Follow.DoesNotExist:
             return JsonResponse(data)
         for i in range(len(users)):
