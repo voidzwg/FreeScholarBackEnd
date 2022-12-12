@@ -11,9 +11,8 @@ class Serialization(View):
         field_id = request.POST.get('field_id')
         if self.model is None or self.slist is None:
             return JsonResponse({'errno': -1, 'msg': "参数错误"})
-        obj_set = self.model.objects.filter(field_id=field_id)
         try:
-            obj = obj_set[0]
+            obj = self.model.objects.get(field_id=field_id)
         except self.model.DoesNotExist:
             return JsonResponse({'errno': -2, 'msg': "序列化对象不存在"})
         json_data = {}
