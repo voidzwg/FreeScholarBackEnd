@@ -482,11 +482,18 @@ def getRecentRecord(request):
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 0
+                            tmp={
+                                'type': type,
+                                'id': i.field_id,
+                                'name': i.user.user.name,
+                                'avatar': i.user.user.avatar
+                            }
                         else:
                             type = 2
                         tmp = {
                             'type': type,
-                            'id': i.field_id
+                            'id': i.field_id,
+                            'name':"admin"
                         }
                         result.append(tmp)
                 count += 1
