@@ -5,8 +5,13 @@ from django.core.mail import send_mail
 
 from user.models import EmailCode
 import re
+from django_redis import get_redis_connection
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'mysite.settings'
+
+email_connection = get_redis_connection()
+expire = 60 * 2
+email_connection.expire('email', expire)
 
 
 def random_str(randomlength=6):
@@ -19,14 +24,9 @@ def random_str(randomlength=6):
     return str
 
 
-def sendCodeEmail(email):
-    emailCode = EmailCode.objects.filter()
-    emailCode.delete()
+def sendCodeEmail(email, id):
     code = random_str(6)
-
-    newCode = EmailCode()
-    newCode.emailcode = code
-    newCode.save()
+    email_connection.zadd("email",{code: id})
 
     email_title = "Free-Scholar系统邮箱验证码"
     email_body = "欢迎来到Free-Scholar系统!\n"
@@ -37,12 +37,17 @@ def sendCodeEmail(email):
     return send_status
 
 
-def CheckCode(code):
-    if not EmailCode.objects.filter(code=code).exists():
+def CheckCode(code, id):
+    print(code)
+
+    code_1=email_connection.zrangebyscore("email",id,id)
+    code_2=code_1[0].decode()
+    print(code_2)
+    if code_2 != code:
         return False
     else:
-        EmailCode.objects.filter(code=code).delete()
         return True
+
 
 def validate_email(code):
     # pattern = re.compile(r'[\w\.]*@[a-zA-Z0-9]+\.[com|.gov|.net]')
