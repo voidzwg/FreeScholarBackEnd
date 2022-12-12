@@ -13,4 +13,6 @@ urlpatterns = [
     path('complainSochlar/',complainSochlar),
     path('complainComment/',complainComment),
     path('complainPaper/',complainSochlar),
+    path('sendEmail/',sendEmail),
+    path('checkCode/',checkCode)
 ]

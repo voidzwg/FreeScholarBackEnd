@@ -9,7 +9,7 @@ from django.db import models
 
 
 class Affiliation(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     name = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     fields = models.JSONField(blank=True, null=True)
@@ -17,17 +17,30 @@ class Affiliation(models.Model):
     scholars = models.JSONField(blank=True, null=True)
     num_pubs_per_year = models.JSONField(blank=True, null=True)
     logo = models.TextField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
+    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'Affiliation'
 
 
+class Collectfavorites(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    user_id = models.IntegerField(blank=True, null=True)
+    favorites_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'CollectFavorites'
+
+
 class Collection(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING)
     paper_id = models.TextField(blank=True, null=True)
     time = models.DateTimeField(blank=True, null=True)
+    favorites = models.ForeignKey('Favorites', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -35,7 +48,7 @@ class Collection(models.Model):
 
 
 class Comment(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
     paper_id = models.TextField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
@@ -48,7 +61,7 @@ class Comment(models.Model):
 
 
 class Complainauthor(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
     scholar = models.ForeignKey('Scholar', models.DO_NOTHING, blank=True, null=True)
     reason = models.TextField(blank=True, null=True)
@@ -63,7 +76,7 @@ class Complainauthor(models.Model):
 
 
 class Complaincomment(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     report = models.ForeignKey('User', models.DO_NOTHING, related_name='report')
     reported = models.ForeignKey('User', models.DO_NOTHING, related_name='reported')
     comment = models.ForeignKey(Comment, models.DO_NOTHING)
@@ -79,7 +92,7 @@ class Complaincomment(models.Model):
 
 
 class Complainpaper(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('Scholar', models.DO_NOTHING)
     paper_id = models.TextField(blank=True, null=True)
     reason = models.TextField(blank=True, null=True)
@@ -93,10 +106,32 @@ class Complainpaper(models.Model):
         db_table = 'ComplainPaper'
 
 
+class Emailcode(models.Model):
+    emailcode = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'EmailCode'
+
+
+class Favorites(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    title = models.CharField(max_length=255, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
+    count = models.IntegerField(blank=True, null=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Favorites'
+
+
 class Field(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     name = models.CharField(max_length=255, blank=True, null=True)
     count = models.IntegerField(blank=True, null=True)
+    type = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -104,7 +139,7 @@ class Field(models.Model):
 
 
 class Follow(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     scholar = models.ForeignKey('Scholar', models.DO_NOTHING)
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(blank=True, null=True)
@@ -115,7 +150,7 @@ class Follow(models.Model):
 
 
 class Keyword(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     name = models.CharField(max_length=255, blank=True, null=True)
     update_time = models.DateTimeField(blank=True, null=True)
     count = models.IntegerField(blank=True, null=True)
@@ -126,7 +161,7 @@ class Keyword(models.Model):
 
 
 class Like1(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
     comment = models.ForeignKey(Comment, models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(blank=True, null=True)
@@ -137,7 +172,7 @@ class Like1(models.Model):
 
 
 class Message(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     owner = models.ForeignKey('User', models.DO_NOTHING, related_name='owner')
     sender = models.ForeignKey('User', models.DO_NOTHING, related_name='sender')
     content = models.TextField(blank=True, null=True)
@@ -150,7 +185,7 @@ class Message(models.Model):
 
 
 class Notice(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey('User', models.DO_NOTHING)
     sender_id = models.IntegerField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
@@ -161,43 +196,65 @@ class Notice(models.Model):
         db_table = 'Notice'
 
 
+class Paper(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    paper_id = models.TextField(blank=True, null=True)
+    like_count = models.IntegerField(blank=True, null=True)
+    collect_count = models.IntegerField(blank=True, null=True)
+    paper_name = models.CharField(max_length=255, blank=True, null=True)
+    read_count = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Paper'
+
+
 class Scholar(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    user = models.ForeignKey('User', models.DO_NOTHING)
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    user = models.ForeignKey('User', models.DO_NOTHING, related_name='user')
     name = models.CharField(max_length=255, blank=True, null=True)
     affi = models.JSONField(blank=True, null=True)
     field = models.CharField(max_length=255, blank=True, null=True)
     hot_index = models.IntegerField(blank=True, null=True)
     claim_time = models.DateTimeField(blank=True, null=True)
     author_id = models.TextField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
+    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True, related_name='admin')
+    paper_show = models.JSONField(blank=True, null=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
+    count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'Scholar'
 
 
-class Scholarportal(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    scholar = models.ForeignKey(Scholar, models.DO_NOTHING)
-    paper_show = models.JSONField(blank=True, null=True)
-    bgp = models.CharField(max_length=255, blank=True, null=True)
-    count = models.IntegerField(blank=True, null=True)
+class Scholaradmit(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+    author_id = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+    audit_time = models.DateTimeField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
+    reply = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'ScholarPortal'
+        db_table = 'ScholarAdmit'
 
 
 class User(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    name = models.CharField(max_length=255, blank=True, null=True)
-    pwd = models.CharField(max_length=255, blank=True, null=True)
-    mail = models.CharField(max_length=255, blank=True, null=True)
-    avatar = models.CharField(max_length=255, blank=True, null=True)
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    name = models.CharField(max_length=255, db_collation='utf8mb4_0900_ai_ci', blank=True, null=True)
+    pwd = models.CharField(max_length=255, db_collation='utf8mb4_0900_ai_ci', blank=True, null=True)
+    mail = models.CharField(max_length=255, db_collation='utf8mb4_0900_ai_ci', blank=True, null=True)
+    avatar = models.CharField(max_length=255, db_collation='utf8mb4_0900_ai_ci', blank=True, null=True)
     identity = models.IntegerField(blank=True, null=True)
     state = models.IntegerField(blank=True, null=True)
     gender = models.IntegerField(blank=True, null=True)
-    bio = models.CharField(max_length=255, blank=True, null=True)
+    bio = models.CharField(max_length=255, db_collation='utf8mb4_0900_ai_ci', blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
     login_date = models.DateTimeField(blank=True, null=True)
 
@@ -207,7 +264,7 @@ class User(models.Model):
 
 
 class Viewhistory(models.Model):
-    field_id = models.IntegerField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
     user = models.ForeignKey(User, models.DO_NOTHING)
     paper_id = models.TextField(blank=True, null=True)
     time = models.DateTimeField(blank=True, null=True)

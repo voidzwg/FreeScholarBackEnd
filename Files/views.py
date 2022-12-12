@@ -57,6 +57,10 @@ class Media(View):
             fid = request.POST.get('fid')
             ret = self.upload_img(fid, img, 'coverimgs', uid=uid, check_owner=True)
             return JsonResponse(ret)
+        elif self.post_type == 3:
+            sid = request.POST.get('scholar_id')
+            print('sid', sid)
+            ret = self.upload_img(sid, img, 'scholarbg', uid=uid, check_owner=True)
+            return JsonResponse(ret)
         else:
             return JsonResponse({'errno': -5, 'msg': "illegal post type"})
-

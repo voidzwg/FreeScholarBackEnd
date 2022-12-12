@@ -1,41 +1,46 @@
 # publish/views.py
 import datetime
 import traceback
-import os.path
+
 import simplejson
 from django.core import serializers
-import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from FreeScholarBackEnd.settings import SECRETS
+from publication.views import publication
 from relation.models import *
 from utils.Token import Authentication
-from utils.media import *
-from publication.views import publication
-from FreeScholarBackEnd.settings import SECRETS
 
 
 @csrf_exempt
 def test(request):
     if request.method == 'GET':
         try:
-            json_file = open("../secrets.json")
-            SECRETS = json.load(json_file)
             data = []
-            req = simplejson.loads(request.body)
-            content = req['input']
-            users = User.objects.filter(name__icontains=content)
-            if "21" in SECRETS.get("ADMIN"):
-                return JsonResponse({'errno': 1})
-            for i in range(len(users)):
-                user_id = users[i].field_id
-                if str(user_id) in list(map(str, SECRETS.get("ADMIN"))):
-                    continue
-                name = users[i].name
-                mail = users[i].mail
-                avatar = users[i].avatar
-                state = users[i].state
-                data1 = {'id': user_id, 'name': name, 'mail': mail, 'avatar': avatar, 'state': state}
+            pid = []
+            favorites_id = request.GET['favorites_id']
+            try:
+                res = Collection.objects.filter(favorites=favorites_id)
+            except Collection.DoesNotExist:
+                res = None
+            for i in range(len(res)):
+                pid.append(res[i].paper_id)
+            papers = publication.search_by_id_list(pid)
+            for i in range(len(res)):
+                try:
+                    col = Paper.objects.get(paper_id=res[i].paper_id)
+                except Paper.DoesNotExist:
+                    col = None
+                    like_count = 0
+                    read_count = 0
+                    collect_count = 0
+                if col is not None:
+                    like_count = col.like_count
+                    read_count = col.read_count
+                    collect_count = col.collect_count
+                data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
+                         'paper': papers[i]}
                 data.append(data1)
             return JsonResponse(data, safe=False)
         except Exception as e:
@@ -67,15 +72,17 @@ def getBaseInfo(request):
         login_date = user.login_date
         try:
             scholar = Scholar.objects.get(user_id=user_id, status=2)
+            scholar_id = scholar.field_id
             affi = scholar.affi
         except Scholar.DoesNotExist:
             affi = None
+            scholar_id = 0
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
             user_count = 0
         try:
-            scholar_count = len(Follow.objects.filter(scholar_id=user_id))
+            scholar_count = len(Follow.objects.filter(scholar_id=scholar_id))
         except Follow.DoesNotExist:
             scholar_count = 0
         try:
@@ -142,7 +149,11 @@ def getFollowers(request):
         user_id = payload.get('id')
         data = []
         try:
-            users = Follow.objects.filter(scholar_id=user_id)
+            scholar_id = Scholar.objects.get(user_id=user_id).field_id
+        except Scholar.DoesNotExist:
+            return JsonResponse(data)
+        try:
+            users = Follow.objects.filter(scholar_id=scholar_id)
         except Follow.DoesNotExist:
             return JsonResponse(data)
         for i in range(len(users)):
@@ -230,8 +241,6 @@ def getUser(request):
         return JsonResponse(payload)
     if payload.get('admin') is False:
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
-    json_file = open("../secrets.json")
-    SECRETS = json.load(json_file)
     if request.method == 'POST':
         data = []
         req = simplejson.loads(request.body)
@@ -239,7 +248,7 @@ def getUser(request):
         users = User.objects.filter(name__icontains=content)
         for i in range(len(users)):
             user_id = users[i].field_id
-            if str(user_id) in list(map(str, SECRETS.get("ADMIN"))):
+            if user_id in SECRETS.get("ADMIN"):
                 continue
             name = users[i].name
             mail = users[i].mail
@@ -441,43 +450,74 @@ def getRecentRecord(request):
             result = []
             keys = list(dict.keys())
             keys.sort(reverse=False)
+            admin_avatar=User.objects.get(field_id=21).avatar
             for key in keys:
                 for i in list1:
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 0
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':i.user.user.name,
+                                'avatar':i.user.user.avatar,
+                                'time':i.audit_time,
+                            }
                         else:
                             type = 2
-                        tmp = {
-                            'type': type,
-                            'id': i.field_id
-                        }
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':"admin",
+                                'avatar':admin_avatar,
+                                'time':i.audit_time
+                            }
                         result.append(tmp)
                 for i in list2:
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 1
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name': i.user.user.name,
+                                'avatar': i.user.user.avatar,
+                                'time': i.audit_time
+                            }
                         else:
                             type = 3
-                        tmp = {
-                            'type': type,
-                            'id': i.field_id
-                        }
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':"admin",
+                                'avatar': admin_avatar,
+                                'time': i.audit_time
+                            }
                         result.append(tmp)
                 for i in list3:
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 0
+                            tmp={
+                                'type': type,
+                                'id': i.field_id,
+                                'name': i.user.user.name,
+                                'avatar': i.user.user.avatar,
+                                'time': i.audit_time
+                            }
                         else:
                             type = 2
-                        tmp = {
-                            'type': type,
-                            'id': i.field_id
-                        }
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':"admin",
+                                'avatar':admin_avatar,
+                                'time': i.audit_time
+                            }
                         result.append(tmp)
-                count += 1
-                if count > 5:
-                    break
+                    count += 1
+                    if count > 5:
+                        break
 
             return JsonResponse({'result': result})
         except Exception as e:
@@ -879,13 +919,14 @@ def processRequest(request):
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         try:
-            fail, payload = Authentication.authentication(request.META)
-            if fail:
-                return JsonResponse(payload)
             user_id = payload.get('id')
             type1 = request.POST.get('type')
             _id = request.POST.get('id')
             res = request.POST.get('agreeOrRefuse')
+            if res == "True":
+                res = True
+            else:
+                res = False
             reply = request.POST.get('reply')
             if type1 == "0":
                 try:

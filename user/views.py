@@ -10,6 +10,7 @@ from user.models import *
 from utils.Token import Authentication
 from utils.media import *
 from utils.superuser import ADMIN
+from user.sendemail import *
 
 token_expire = 60 * 60 * 1
 r = get_redis_connection()
@@ -312,4 +313,50 @@ def complainPaper(request):
     complain.save()
     return JsonResponse({'errno':0,'msg':"success"})
 
-    
+
+@csrf_exempt
+def sendEmail(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    # fail, payload = Authentication.authentication(request.META)
+    # if fail:
+    #     return JsonResponse(payload)
+    # user = User.objects.get(field_id=payload.get('id'))
+    try:
+        data_body=request.POST
+
+        email = data_body.get('email')
+        if email is None:
+            return JsonResponse({'result': 0, 'msg': "请检查你的请求体"})
+        if not validate_email(email):
+            return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
+        # if Main.objects.filter(email=email).exists():
+        #     result = {'result': 0, 'msg': "邮箱已被使用"}
+        #     print(result)
+        #     return JsonResponse(result)
+        send_result = sendCodeEmail(email)
+        if send_result == 0:
+            result = {'result': 0, 'msg': '发送失败!请检查邮箱格式'}
+        else:
+            result = {'result': 1, 'msg': '发送成功!请及时在邮箱中查收.'}
+
+        return JsonResponse(result)
+    except Exception as e:
+        traceback.print_exc()
+
+@csrf_exempt
+def checkCode(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    try:
+        data_body = request.POST
+
+        code = data_body.get('code')
+        emailCode=EmailCode.objects.filter(emailcode=code).first()
+        if emailCode is None:
+            return JsonResponse({'error':1,'msg':"验证码错误"})
+        else:
+            emailCode.delete()
+            return JsonResponse({'msg':"验证码正确"})
+    except Exception as e:
+        traceback.print_exc()
