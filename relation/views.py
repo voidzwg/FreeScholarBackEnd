@@ -74,15 +74,17 @@ def getBaseInfo(request):
         login_date = user.login_date
         try:
             scholar = Scholar.objects.get(user_id=user_id, status=2)
+            scholar_id = scholar.field_id
             affi = scholar.affi
         except Scholar.DoesNotExist:
             affi = None
+            scholar_id = 0
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
             user_count = 0
         try:
-            scholar_count = len(Follow.objects.filter(scholar_id=user_id))
+            scholar_count = len(Follow.objects.filter(scholar_id=scholar_id))
         except Follow.DoesNotExist:
             scholar_count = 0
         try:
@@ -921,13 +923,14 @@ def processRequest(request):
         return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
     if request.method == 'POST':
         try:
-            fail, payload = Authentication.authentication(request.META)
-            if fail:
-                return JsonResponse(payload)
             user_id = payload.get('id')
             type1 = request.POST.get('type')
             _id = request.POST.get('id')
             res = request.POST.get('agreeOrRefuse')
+            if res == "True":
+                res = True
+            else:
+                res = False
             reply = request.POST.get('reply')
             if type1 == "0":
                 try:
