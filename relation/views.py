@@ -441,6 +441,7 @@ def getRecentRecord(request):
             result = []
             keys = list(dict.keys())
             keys.sort(reverse=False)
+            admin_avatar=User.objects.get(field_id=21).avatar
             for key in keys:
                 for i in list1:
                     if i.audit_time == key:
@@ -450,14 +451,17 @@ def getRecentRecord(request):
                                 'type': type,
                                 'id': i.field_id,
                                 'name':i.user.user.name,
-                                'avatar':i.user.user.avatar
+                                'avatar':i.user.user.avatar,
+                                'time':i.audit_time,
                             }
                         else:
                             type = 2
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name':"admin"
+                                'name':"admin",
+                                'avatar':admin_avatar,
+                                'time':i.audit_time
                             }
                         result.append(tmp)
                 for i in list2:
@@ -468,15 +472,18 @@ def getRecentRecord(request):
                                 'type': type,
                                 'id': i.field_id,
                                 'name': i.user.user.name,
-                                'avatar': i.user.user.avatar
+                                'avatar': i.user.user.avatar,
+                                'time': i.audit_time
                             }
                         else:
                             type = 3
-                        tmp = {
-                            'type': type,
-                            'id': i.field_id,
-                            'name':"admin",
-                        }
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':"admin",
+                                'avatar': admin_avatar,
+                                'time': i.audit_time
+                            }
                         result.append(tmp)
                 for i in list3:
                     if i.audit_time == key:
@@ -486,19 +493,22 @@ def getRecentRecord(request):
                                 'type': type,
                                 'id': i.field_id,
                                 'name': i.user.user.name,
-                                'avatar': i.user.user.avatar
+                                'avatar': i.user.user.avatar,
+                                'time': i.audit_time
                             }
                         else:
                             type = 2
-                        tmp = {
-                            'type': type,
-                            'id': i.field_id,
-                            'name':"admin"
-                        }
+                            tmp = {
+                                'type': type,
+                                'id': i.field_id,
+                                'name':"admin",
+                                'avatar':admin_avatar,
+                                'time': i.audit_time
+                            }
                         result.append(tmp)
-                count += 1
-                if count > 5:
-                    break
+                    count += 1
+                    if count > 5:
+                        break
 
             return JsonResponse({'result': result})
         except Exception as e:
