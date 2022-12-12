@@ -12,7 +12,7 @@ class Media(View):
     post_type = 0
     model = None
 
-    def upload_img(self, field_id, img, url, uid=None, check_owner=False):
+    def upload_img(self, field_id, img, url, obj_name, uid=None, check_owner=False):
         try:
             obj = self.model.objects.get(field_id=field_id)
         except self.model.DoesNotExist as e:
@@ -27,8 +27,9 @@ class Media(View):
                 return {'errno': -4, 'msg': "模型不存在对应属性"}
         img_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f_') + str(field_id) + '_' + img.name
         try:
-            obj.avatar = img_name
-            obj.save()
+            if hasattr(obj, obj_name):
+                setattr(obj, obj_name, img_name)
+                obj.save()
         except Exception as e:
             print(e)
             return {'errno': -4, 'msg': "模型不存在对应属性"}
@@ -51,16 +52,15 @@ class Media(View):
         if self.model is None:
             return JsonResponse({'errno': -6, 'msg': "illegal model"})
         if self.post_type == 1:
-            ret = self.upload_img(uid, img, 'avatars')
+            ret = self.upload_img(uid, img, 'avatars', 'avatar')
             return JsonResponse(ret)
         elif self.post_type == 2:
             fid = request.POST.get('fid')
-            ret = self.upload_img(fid, img, 'coverimgs', uid=uid, check_owner=True)
+            ret = self.upload_img(fid, img, 'coverimgs', 'avatar', uid=uid, check_owner=True)
             return JsonResponse(ret)
         elif self.post_type == 3:
             sid = request.POST.get('scholar_id')
-            print('sid', sid)
-            ret = self.upload_img(sid, img, 'scholarbg', uid=uid, check_owner=True)
+            ret = self.upload_img(sid, img, 'scholarbg', 'avatar', uid=uid, check_owner=True)
             return JsonResponse(ret)
         else:
             return JsonResponse({'errno': -5, 'msg': "illegal post type"})
