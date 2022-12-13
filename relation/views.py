@@ -641,6 +641,9 @@ def newFavorites(request):
             user_id = payload.get('id')
             req = simplejson.loads(request.body)
             title = req['title']
+            favorites = Favorites.objects.filter(title=title)
+            if len(favorites) > 0:
+                return JsonResponse({'errno': 1, 'msg': "与现有收藏夹重名"})
             curr_time = datetime.datetime.now()
             time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
             favorite = Favorites(title=title, create_time=time_str, count=0, user_id=user_id)
@@ -1111,5 +1114,20 @@ def getSolvedTaskNum(request):
             data.append(num)
             x = x - datetime.timedelta(days=1)
         return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def deleteFavorites(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if request.method == 'POST':
+        favorites_id = request.POST.get('favorites_id')
+        try:
+            Favorites.objects.get(field_id=favorites_id).delete()
+        except Favorites.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "收藏夹不存在"})
+        return JsonResponse({'errno': 0, 'msg': "删除成功"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
