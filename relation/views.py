@@ -488,8 +488,8 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name': i.user.user.name,
-                                'avatar': i.user.user.avatar,
+                                'name': i.report.name,
+                                'avatar': i.report.avatar,
                                 'time': i.audit_time
                             }
                         else:
@@ -509,8 +509,8 @@ def getRecentRecord(request):
                             tmp={
                                 'type': type,
                                 'id': i.field_id,
-                                'name': i.user.user.name,
-                                'avatar': i.user.user.avatar,
+                                'name': i.user.name,
+                                'avatar': i.user.avatar,
                                 'time': i.audit_time
                             }
                         else:
