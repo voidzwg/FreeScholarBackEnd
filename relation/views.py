@@ -1072,7 +1072,11 @@ def getHistoryByUserId(request):
         except Viewhistory.DoesNotExist:
             res = None
         for i in range(len(res)):
-            data.append({'_id': res[i].field_id, 'user_id': res[i].user_id, 'paper_id': res[i].paper_id,
+            paper_id=res[i].paper_id
+            paper=Paper.objects.filter(paper_id=paper_id).first()
+            if paper is None:
+                return ({'error':1,'msg':"文章不存在"})
+            data.append({'_id': res[i].field_id, 'user_id': res[i].user_id, 'paper_id': paper_id,'paper_name':paper.paper_name,
                      'time': res[i].time})
         return JsonResponse(data, safe=False)
     else:
