@@ -302,10 +302,16 @@ class publication:
             comments = Comment.objects.filter(paper_id=paper_id)
             comment_result = []
             for comment in comments:
+                like1=Like1.objects.filter(user=user,comment=comment).first()
+                if like1 is None:
+                    isliked=False
+                else:
+                    isliked=True
                 tmp = {
                     "avatar": comment.user.avatar,
                     "username": comment.user.name,
-                    "text": comment.content
+                    "text": comment.content,
+                    "liked":isliked
                 }
                 comment_result.append(tmp)
             if paper is None:
@@ -321,8 +327,18 @@ class publication:
                 paper.read_count += 1
                 paper.save()
                 paper.save_paper_data()
+            like = Like.objects.filter(user=user,paper=paper).first()
+            if like is None:
+                isLiked1=False
+            else:
+                isLiked1=True
+            collect=Collection.objects.filter(user=user,paper_id=paper_id).first()
+            if collect is None:
+                isCollected=False
+            else:
+                isCollected=True
             return JsonResponse(
-                {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.collect_count,
+                {'like_count': paper.like_count, 'isLiked':isLiked1,'read_count': paper.read_count, 'collect_count': paper.collect_count,'isCollected':isCollected,
                  'comment': comment_result})
         except Exception as e:
             traceback.print_exc()
@@ -361,59 +377,73 @@ class publication:
 
     def LikeComment(request):
         if request.method == 'POST':
-            if request.method == 'POST':
-                fail, payload = Authentication.authentication(request.META)
-                if fail:
-                    return JsonResponse(payload)
-                try:
-                    user_id = payload.get('id')
-                    user = User.objects.get(field_id=user_id)
-                except User.DoesNotExist:
-                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
-                try:
-                    data_body = request.POST
-                    comment_id = data_body.get('comment_id')
-                    like1 = Like1()
-                    like1.comment_id = comment_id
-                    like1.user = user
-                    like1.create_time = datetime.datetime
-                    like1.save()
-                    comment = Comment.objects.filter(comment_id=comment_id).first()
-                    if comment is None:
-                        return JsonResponse({'error': 1, 'msg': "评论不存在"})
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            try:
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            try:
+                data_body = request.POST
+                comment_id = data_body.get('comment_id')
+                comment=Comment.objects.filter(field_id=comment_id).first()
+                if comment is None:
+                    return JsonResponse({'error': 0, 'message': "评论不存在"})
+                like1=Like1.objects.filter(user=user,comment=comment).first()
+                if like1 is None:
+                    like11 = Like1()
+                    like11.comment = comment
+                    like11.user = user
+                    like11.create_time = datetime.datetime
+                    like11.save()
                     comment.count += 1
                     comment.save()
-                except Exception as e:
-                    traceback.print_exc()
+                else:
+                    like1.delete()
+                    comment.count -=1
+                    comment.save()
+            except Exception as e:
+                traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
     def LikePaper(request):
         if request.method == 'POST':
-            if request.method == 'POST':
-                fail, payload = Authentication.authentication(request.META)
-                if fail:
-                    return JsonResponse(payload)
-                try:
-                    user_id = payload.get('id')
-                    user = User.objects.get(field_id=user_id)
-                except User.DoesNotExist:
-                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            try:
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
                 paper = Paper.objects.filter(paper_id=paper_id).first()
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
-                else:
+                like = Like.objects.filter(user=user,paper=paper)
+                if like is None:
+                    like_1=Like()
+                    like_1.paper=paper
+                    like_1.user=user
                     paper.like_count += 1
                     paper.save_paper_data()
                     paper.save()
+                else:
+                    like.delete()
+                    paper.like_count-=1
+                    paper.save()
+                    paper.save_paper_data()
                 return JsonResponse({'message': "点赞成功"})
             except Exception as e:
                 traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
 
     def CollectPaper(request):
         if request.method == 'POST':
@@ -430,22 +460,60 @@ class publication:
                 paper_id = data_body.get('paper_id')
                 favorites_id = data_body.get('favorites_id')
                 paper = Paper.objects.filter(paper_id=paper_id).first()
-                favorite = Favorites.objects.filter(favorites_id=favorites_id)
+                favorite = Favorites.objects.filter(field_id=favorites_id).first()
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
+                elif favorite is None:
+                    return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
+                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                if collection is not None:
+                    return JsonResponse({'error':0,'msg':"收藏关系已存在"})
                 else:
-                    paper.like_count += 1
+                    paper.collect_count += 1
                     paper.save_paper_data()
                     paper.save()
                     collection = Collection()
                     collection.paper_id = paper_id
                     collection.user = user
                     collection.favorites = favorite
-                    collection.time = datetime.datetime
+                    collection.time = datetime.datetime.now()
                     favorite.count += 1
                     favorite.save()
                     collection.save()
                 return JsonResponse({'message': "收藏成功"})
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
+    def UnCollectPaper(request):
+        if request.method == 'POST':
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            try:
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                if collection is None:
+                    return JsonResponse({'error': 0, 'message': "不具备收藏关系"})
+                favorite = collection.favorites
+                if favorite is None:
+                    return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
+                else:
+                    paper.collect_count -= 1
+                    paper.save_paper_data()
+                    paper.save()
+                    favorite.count -= 1
+                    favorite.save()
+                    collection.delete()
+                return JsonResponse({'message': "取消收藏成功"})
             except Exception as e:
                 traceback.print_exc()
         else:

@@ -257,8 +257,8 @@ def complainSochlar(request):
         return JsonResponse({'error': 1, 'message': "学者不存在"})
     complain = Complainauthor()
     complain.user = user
-    complain.create_time = datetime.datetime
-    complain.audit_time = datetime.datetime
+    complain.create_time = datetime.datetime.now()
+    complain.audit_time = datetime.datetime.now()
     complain.status = 0
     complain.scholar = scholar
     complain.reason = reason
@@ -285,8 +285,8 @@ def complainComment(request):
         return JsonResponse({'error': 1, 'message': "评论不存在"})
     complain = Complaincomment()
     complain.user = user
-    complain.create_time = datetime.datetime
-    complain.audit_time = datetime.datetime
+    complain.create_time = datetime.datetime.now()
+    complain.audit_time = datetime.datetime.now()
     complain.status = 0
     complain.comment = comment
     complain.report = user
@@ -308,8 +308,8 @@ def complainPaper(request):
     reason = request.POST.get('reason')
     complain = Complainpaper()
     complain.user = user
-    complain.create_time = datetime.datetime
-    complain.audit_time = datetime.datetime
+    complain.create_time = datetime.datetime.now()
+    complain.audit_time = datetime.datetime.now()
     complain.status = 0
     complain.paper_id = paper_id
     complain.reason = reason
