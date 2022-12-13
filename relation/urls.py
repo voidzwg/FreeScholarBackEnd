@@ -41,4 +41,5 @@ urlpatterns = [
     path('getHistoryByUserId', getHistoryByUserId),
     path('deleteHistory', deleteHistory),
     path('getSolvedTaskNum', getSolvedTaskNum),
+    path('deleteFavorites', deleteFavorites),
 ]

@@ -435,27 +435,31 @@ def getRecentRecord(request):
                     dict[complainpaper.audit_time] = complainpaper.field_id
                 list1.append(complainpaper)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
+            count=0
             for complaincomment in Complaincomment.objects.all():
                 if complaincomment.audit_time is not None:
                     dict[complaincomment.audit_time] = complaincomment.field_id
                 list2.append(complaincomment)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
+            count=0
             for complainauthor in Complainauthor.objects.all():
                 if complainauthor.audit_time is not None:
                     dict[complainauthor.audit_time] = complainauthor.field_id
                 list3.append(complainauthor)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
             result = []
             keys = list(dict.keys())
-            keys.sort(reverse=False)
+            keys.sort(reverse=True)
             admin_avatar=User.objects.get(field_id=21).avatar
+            count=0
             for key in keys:
+                print(key)
                 for i in list1:
                     if i.audit_time == key:
                         if i.status == 0:
@@ -484,8 +488,8 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name': i.user.user.name,
-                                'avatar': i.user.user.avatar,
+                                'name': i.report.name,
+                                'avatar': i.report.avatar,
                                 'time': i.audit_time
                             }
                         else:
@@ -505,8 +509,8 @@ def getRecentRecord(request):
                             tmp={
                                 'type': type,
                                 'id': i.field_id,
-                                'name': i.user.user.name,
-                                'avatar': i.user.user.avatar,
+                                'name': i.user.name,
+                                'avatar': i.user.avatar,
                                 'time': i.audit_time
                             }
                         else:
@@ -519,9 +523,9 @@ def getRecentRecord(request):
                                 'time': i.audit_time
                             }
                         result.append(tmp)
-                    count += 1
-                    if count > 5:
-                        break
+                count += 1
+                if count > 4:
+                    break
 
             return JsonResponse({'result': result})
         except Exception as e:
@@ -642,6 +646,9 @@ def newFavorites(request):
             user_id = payload.get('id')
             req = simplejson.loads(request.body)
             title = req['title']
+            favorites = Favorites.objects.filter(title=title, user_id=user_id)
+            if len(favorites) > 0:
+                return JsonResponse({'errno': 1, 'msg': "与现有收藏夹重名"})
             curr_time = datetime.datetime.now()
             time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
             favorite = Favorites(title=title, create_time=time_str, count=0, user_id=user_id, avatar=DEFAULT_COVERIMG)
@@ -957,9 +964,16 @@ def processRequest(request):
                     obj.status = 2
                 else:
                     obj.status = 1
+                scholar_id = obj.scholar_id
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
+                scholar = Scholar.objects.get(field_id=scholar_id)
+                aim_id = scholar.user_id
+                user = User.objects.get(field_id=aim_id)
+                user.identity = 1
+                user.save()
+                scholar.delete()
             elif type1 == "2":
                 try:
                     obj = Complainpaper.objects.get(field_id=_id)
@@ -1007,8 +1021,11 @@ def processRequest(request):
                             return JsonResponse({'errno': 1, 'msg': "该学者已存在或该用户已经是学者"})
                     except Scholar.DoesNotExist:
                         name = Scholaradmit.name
+                    obj2 = User.objects.get(field_id=user_id1)
+                    obj2.identity = 2
+                    obj2.save()
                     Scholar.objects.create(user_id=user_id1, author_id=author_id,
-                                            name=name, affi="{}", claim_time=time_str)
+                                            name=name, affi="{}", claim_time=time_str, count=0)
                 else:
                     obj.status = 1
                 obj.audit_time = time_str
@@ -1112,5 +1129,20 @@ def getSolvedTaskNum(request):
             data.append(num)
             x = x - datetime.timedelta(days=1)
         return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def deleteFavorites(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if request.method == 'POST':
+        favorites_id = request.POST.get('favorites_id')
+        try:
+            Favorites.objects.get(field_id=favorites_id).delete()
+        except Favorites.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "收藏夹不存在"})
+        return JsonResponse({'errno': 0, 'msg': "删除成功"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
