@@ -642,7 +642,7 @@ def newFavorites(request):
             user_id = payload.get('id')
             req = simplejson.loads(request.body)
             title = req['title']
-            favorites = Favorites.objects.filter(title=title)
+            favorites = Favorites.objects.filter(title=title, user_id=user_id)
             if len(favorites) > 0:
                 return JsonResponse({'errno': 1, 'msg': "与现有收藏夹重名"})
             curr_time = datetime.datetime.now()
