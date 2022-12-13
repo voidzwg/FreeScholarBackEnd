@@ -128,6 +128,7 @@ def getFollows(request):
                 continue
             user_id = scholar.user_id
             affi = scholar.affi
+            author_id = scholar.author_id
             try:
                 user = User.objects.get(field_id=user_id)
             except User.DoesNotExist:
@@ -137,7 +138,7 @@ def getFollows(request):
             avatar = user.avatar
 
             data1 = {'id': user_id, 'scholar_id': scholar_id, 'institution': affi, 'username': u_name
-                , 'avatar': avatar, 'bio': bio, 'time': users[i].create_time}
+                , 'avatar': avatar, 'bio': bio, 'time': users[i].create_time, 'author_id': author_id}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
