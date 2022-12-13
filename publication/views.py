@@ -279,20 +279,25 @@ class publication:
 
     def ReadPaper(request):
         if request.method == 'POST':
-            # # if request.method == 'POST':
-            # #     fail, payload = Authentication.authentication(request.META)
-            # #     if fail:
-            # #         return JsonResponse(payload)
-            # #     try:
-            # #         user_id = payload.get('id')
-            # #         user = User.objects.get(field_id=user_id)
-            #     except User.DoesNotExist:
-            #         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            if request.method == 'POST':
+                fail, payload = Authentication.authentication(request.META)
+                if fail:
+                    return JsonResponse(payload)
+                try:
+                    user_id = payload.get('id')
+                    user = User.objects.get(field_id=user_id)
+                except User.DoesNotExist:
+                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
             try:
                 data = request.body.decode()
                 data_body=json.loads(data)
                 paper_id = data_body.get('paper_id')
                 paper_name = data_body.get('paper_name')
+                viewHistory=Viewhistory()
+                viewHistory.user=user
+                viewHistory.paper_id=paper_id
+                viewHistory.time=datetime.datetime
+                viewHistory.save()
                 paper = Paper.objects.filter(paper_id=paper_id).first()
                 comments = Comment.objects.filter(paper_id=paper_id)
                 comment_result = []
