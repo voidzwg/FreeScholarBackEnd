@@ -171,8 +171,6 @@ class Scholar(models.Model):
     hot_index = models.IntegerField(blank=True, null=True)
     claim_time = models.DateTimeField(blank=True, null=True)
     author_id = models.TextField(blank=True, null=True)
-    status = models.IntegerField(blank=True, null=True)
-    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True, related_name='admin')
     paper_show = models.JSONField(blank=True, null=True)
     avatar = models.CharField(max_length=255, blank=True, null=True)
     count = models.IntegerField(blank=True, null=True)
