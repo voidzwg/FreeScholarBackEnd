@@ -1054,7 +1054,10 @@ def showFavorites(request):
 
 def getHistoryByUserId(request):
     if request.method == 'POST':
-        _id = request.POST.get('_id')
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        _id = payload.get('id')
         data = []
         try:
             res = Viewhistory.objects.filter(user_id=_id)
