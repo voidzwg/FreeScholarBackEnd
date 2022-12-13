@@ -40,4 +40,5 @@ urlpatterns = [
     path('getRecentRecord', getRecentRecord),
     path('getHistoryByUserId', getHistoryByUserId),
     path('deleteHistory', deleteHistory),
+    path('getSolvedTaskNum', getSolvedTaskNum),
 ]
