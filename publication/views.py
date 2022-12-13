@@ -465,7 +465,7 @@ class publication:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
                 elif favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
-                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                collection = Collection.objects.filter(user=user,paper_id=paper_id,favorite=favorite).first()
                 if collection is not None:
                     return JsonResponse({'error':0,'msg':"收藏关系已存在"})
                 else:
@@ -500,10 +500,13 @@ class publication:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
                 paper = Paper.objects.filter(paper_id=paper_id).first()
-                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                favorites_id = data_body.get('favorites_id')
+                favorite = Favorites.objects.filter(field_id=favorites_id).first()
+                if favorite is None:
+                    return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
+                collection = Collection.objects.filter(user=user, paper_id=paper_id,favorite=favorite).first()
                 if collection is None:
                     return JsonResponse({'error': 0, 'message': "不具备收藏关系"})
-                favorite = collection.favorites
                 if favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
                 else:
