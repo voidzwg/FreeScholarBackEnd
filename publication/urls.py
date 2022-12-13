@@ -16,5 +16,7 @@ urlpatterns = [
     path('addPub/',views.publication.addPub),
     path('getPaperById/', views.publication.getPaperById),
     path('UnCollectPaper/',views.publication.UnCollectPaper),
+    path('MakeComment/',views.publication.MakeComment),
+    path('LikeComment/',views.publication.LikeComment)
 ]
 

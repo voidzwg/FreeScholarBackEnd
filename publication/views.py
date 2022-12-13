@@ -399,10 +399,12 @@ class publication:
                     like11.save()
                     comment.count += 1
                     comment.save()
+                    return JsonResponse({'msg':"点赞成功"})
                 else:
                     like1.delete()
                     comment.count -=1
                     comment.save()
+                    return JsonResponse({'msg':"取消点赞成功"})
             except Exception as e:
                 traceback.print_exc()
         else:
@@ -433,12 +435,13 @@ class publication:
                     paper.save_paper_data()
                     paper.save()
                     like_1.save()
+                    return JsonResponse({'message': "点赞成功"})
                 else:
                     like.delete()
                     paper.like_count-=1
                     paper.save()
                     paper.save_paper_data()
-                return JsonResponse({'message': "点赞成功"})
+                    return JsonResponse({'message': "取消点赞成功"})
             except Exception as e:
                 traceback.print_exc()
         else:
