@@ -77,7 +77,8 @@ def getBaseInfo(request):
             affi = scholar.affi
         except Scholar.DoesNotExist:
             affi = None
-            scholar_id = 0
+            scholar_id = None
+            author_id = None
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
@@ -1053,7 +1054,10 @@ def showFavorites(request):
 
 def getHistoryByUserId(request):
     if request.method == 'POST':
-        _id = request.POST.get('_id')
+        fail, payload = Authentication.authentication(request.META)
+        if fail:
+            return JsonResponse(payload)
+        _id = payload.get('id')
         data = []
         try:
             res = Viewhistory.objects.filter(user_id=_id)
