@@ -12,7 +12,7 @@ urlpatterns = [
     path('logout/', logout),
     path('complainSochlar/', complainSochlar),
     path('complainComment/', complainComment),
-    path('complainPaper/', complainSochlar),
+    path('complainPaper/', complainPaper),
     path('sendEmail/', sendEmail),
     path('checkCode/', checkCode),
     path('admitScholar/', admit_code),
