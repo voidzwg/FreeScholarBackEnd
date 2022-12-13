@@ -153,7 +153,9 @@ def getFollowers(request):
         user_id = payload.get('id')
         data = []
         try:
-            scholar_id = Scholar.objects.get(user_id=user_id).field_id
+            scholar = Scholar.objects.get(user_id=user_id)
+            scholar_id = scholar.field_id
+            author_id = scholar.author_id
         except Scholar.DoesNotExist:
             return JsonResponse(data)
         try:
@@ -170,7 +172,7 @@ def getFollowers(request):
             u_name = user.name
             avatar = user.avatar
             data1 = {'id': user_id, 'username': u_name, 'avatar': avatar, 'bio': bio,
-                     'time': users[i].create_time}
+                     'time': users[i].create_time, 'author_id': author_id}
             data.append(data1)
         return JsonResponse(data, safe=False)
     else:
