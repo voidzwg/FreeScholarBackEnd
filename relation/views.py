@@ -71,8 +71,9 @@ def getBaseInfo(request):
         gender = user.gender
         login_date = user.login_date
         try:
-            scholar = Scholar.objects.get(user_id=user_id, status=2)
+            scholar = Scholar.objects.get(user_id=user_id)
             scholar_id = scholar.field_id
+            author_id = scholar.author_id
             affi = scholar.affi
         except Scholar.DoesNotExist:
             affi = None
@@ -99,7 +100,8 @@ def getBaseInfo(request):
         return JsonResponse({'username': u_name, 'avatar': avatar, 'institution': affi, 'bio': bio,
                              'follows': user_count, 'followers': scholar_count, 'likes': counts
                                 , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
-                                , 'gender': gender, 'login_date': login_date})
+                                , 'gender': gender, 'login_date': login_date, 'scholar_id': scholar_id
+                             , 'author_id': author_id})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -119,7 +121,7 @@ def getFollows(request):
         for i in range(len(users)):
             scholar_id = users[i].scholar_id
             try:
-                scholar = Scholar.objects.get(field_id=scholar_id, status=2)
+                scholar = Scholar.objects.get(field_id=scholar_id)
             except Scholar.DoesNotExist:
                 continue
             user_id = scholar.user_id
@@ -341,7 +343,7 @@ def getNum(request):
         except User.DoesNotExist:
             admin = 0
         try:
-            scholar = len(Scholar.objects.filter(status=2))
+            scholar = len(Scholar.objects.all())
         except Scholar.DoesNotExist:
             scholar = 0
         return JsonResponse({'userNum': user, 'scholarNum': scholar, 'adminNum': admin})
@@ -362,8 +364,8 @@ def getUserItem(request):
         except Affiliation.DoesNotExist:
             num1 = 0
         try:
-            num2 = len(Scholar.objects.filter(status=0))
-        except Scholar.DoesNotExist:
+            num2 = len(Scholaradmit.objects.filter(status=0))
+        except Scholaradmit.DoesNotExist:
             num2 = 0
         num = num1 + num2
         return JsonResponse({'num': num})
@@ -713,12 +715,12 @@ def getUserItemAll(request):
         #     return JsonResponse(payload)
         # user_id = payload.get('id')
         try:
-            num1 = len(Affiliation.objects.filter(status=1))
+            num1 = len(Affiliation.objects.filter(status=2) | Affiliation.objects.filter(status=1))
         except Affiliation.DoesNotExist:
             num1 = 0
         try:
-            num2 = len(Scholar.objects.filter(status=1))
-        except Scholar.DoesNotExist:
+            num2 = len(Scholaradmit.objects.filter(status=1) | Scholaradmit.objects.filter(status=2))
+        except Scholaradmit.DoesNotExist:
             num2 = 0
         num = num1+num2
         return JsonResponse({'num': num})
@@ -807,8 +809,8 @@ def getAllScholarApplication(request):
     if request.method == 'GET':
         data = []
         try:
-            res1 = Scholar.objects.all()
-        except Scholar.DoesNotExist:
+            res1 = Scholaradmit.objects.all()
+        except Scholaradmit.DoesNotExist:
             res1 = None
         res1 = serializers.serialize("json", res1, ensure_ascii=False)
         res1 = simplejson.loads(res1)
@@ -899,8 +901,8 @@ def getPendingScholarApplication(request):
     if request.method == 'GET':
         data = []
         try:
-            res1 = Scholar.objects.filter(status=0)
-        except Scholar.DoesNotExist:
+            res1 = Scholaradmit.objects.filter(status=0)
+        except Scholaradmit.DoesNotExist:
             res1 = None
         res1 = serializers.serialize("json", res1, ensure_ascii=False)
         res1 = simplejson.loads(res1)
@@ -982,15 +984,33 @@ def processRequest(request):
                 obj.admin_id = user_id
                 obj.save()
             elif type1 == "4":
+                curr_time = datetime.datetime.now()
+                time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
                 try:
-                    obj = Scholar.objects.get(field_id=_id)
-                except Scholar.DoesNotExist:
+                    obj = Scholaradmit.objects.get(field_id=_id)
+                except Scholaradmit.DoesNotExist:
                     return JsonResponse({'errno': 1, 'msg': "该事项不存在"})
                 if res:
                     obj.status = 2
+                    author_id = obj.author_id
+                    user_id1 = obj.user_id
+                    name = obj.name
+                    try:
+                        obj1 = Scholar.objects.filter(author_id=author_id) | Scholar.objects.filter(user_id=user_id1)
+                        if len(obj1) > 0:
+                            obj.status = 1
+                            obj.reply = "该学者已存在或该用户已经是学者"
+                            obj.audit_time = time_str
+                            obj.save()
+                            return JsonResponse({'errno': 1, 'msg': "该学者已存在或该用户已经是学者"})
+                    except Scholar.DoesNotExist:
+                        name = Scholaradmit.name
+                    Scholar.objects.create(user_id=user_id1, author_id=author_id,
+                                            name=name, affi="{}", claim_time=time_str)
                 else:
                     obj.status = 1
-                obj.admin_id = user_id
+                obj.audit_time = time_str
+                obj.reply = reply
                 obj.save()
             return JsonResponse({'errno': 0, 'msg': "处理成功"})
         except Exception as e:
@@ -1055,5 +1075,37 @@ def deleteHistory(request):
         except Viewhistory.DoesNotExist:
             return JsonResponse({'errno': 1, 'msg': "历史记录不存在"})
         return JsonResponse({'errno': 0, 'msg': "删除成功"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getSolvedTaskNum(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        now = datetime.datetime.now().date()
+        x = now
+        for i in range(7):
+            y = x + datetime.timedelta(days=1)
+            try:
+                num1 = len(Complaincomment.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complaincomment.DoesNotExist:
+                num1 = 0
+            try:
+                num2 = len(Complainauthor.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complainauthor.DoesNotExist:
+                num2 = 0
+            try:
+                num3 = len(Complainpaper.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complainpaper.DoesNotExist:
+                num3 = 0
+            num = num1 + num2 + num3
+            data.append(num)
+            x = x - datetime.timedelta(days=1)
+        return JsonResponse(data, safe=False)
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})

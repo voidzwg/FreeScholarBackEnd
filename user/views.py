@@ -324,21 +324,16 @@ def sendEmail(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
+    user = User.objects.get(field_id=payload.get('id'))
     try:
         data_body = request.POST
 
         email = data_body.get('email')
-        author_id = data_body.get('author_id')
-        name = data_body.get('name')
         if email is None:
             return JsonResponse({'result': 0, 'msg': "请检查你的请求体"})
         if not validate_email(email):
             return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
-        now_date = datetime.datetime.now()
-        admit = Scholaradmit(user_id=payload.get('id'), author_id=author_id, name=name, email=email,
-                             create_time=now_date, status=0)
-        admit.save()
-        send_result = sendCodeEmail(email, payload.get('id'))
+        send_result = sendCodeEmail(email, user.field_id)
         if send_result == 0:
             result = {'result': 0, 'msg': '发送失败!请检查邮箱格式'}
         else:
@@ -368,3 +363,25 @@ def checkCode(request):
             return JsonResponse({'msg': "验证码正确"})
     except Exception as e:
         traceback.print_exc()
+
+
+def admit_code(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    data_body = request.POST
+
+    email = data_body.get('email')
+    author_id = data_body.get('author_id')
+    name = data_body.get('name')
+    if email is None:
+        return JsonResponse({'result': 0, 'msg': "请检查你的请求体"})
+    if not validate_email(email):
+        return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
+    now_date = datetime.datetime.now()
+    admit = Scholaradmit(user_id=payload.get('id'), author_id=author_id, name=name, email=email,
+                         create_time=now_date, status=0)
+    admit.save()
+    return JsonResponse({'errno': 0, 'msg': "验证成功"})
