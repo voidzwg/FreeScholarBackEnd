@@ -345,33 +345,32 @@ class publication:
 
     def MakeComment(request):
         if request.method == 'POST':
-            if request.method == 'POST':
-                fail, payload = Authentication.authentication(request.META)
-                if fail:
-                    return JsonResponse(payload)
-                try:
-                    user_id = payload.get('id')
-                    user = User.objects.get(field_id=user_id)
-                except User.DoesNotExist:
-                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
-                try:
-                    data_body = request.POST
-                    paper_id = data_body.get('paper_id')
-                    content = data_body.get('content')
-                    paper = Paper.objects.filter(paper_id=paper_id).first()
-                    if paper is None:
-                        return JsonResponse({'error': 0, 'message': "文章不存在"})
-                    else:
-                        comment = Comment()
-                        comment.user = user
-                        comment.paper_id = paper_id
-                        comment.count = 0
-                        comment.content = content
-                        comment.create_time = datetime.datetime
-                        comment.save()
-                    return JsonResponse({'message': "评论成功"})
-                except Exception as e:
-                    traceback.print_exc()
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
+            try:
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            try:
+                data_body = request.POST
+                paper_id = data_body.get('paper_id')
+                content = data_body.get('content')
+                paper = Paper.objects.filter(paper_id=paper_id).first()
+                if paper is None:
+                    return JsonResponse({'error': 0, 'message': "文章不存在"})
+                else:
+                    comment = Comment()
+                    comment.user = user
+                    comment.paper_id = paper_id
+                    comment.count = 0
+                    comment.content = content
+                    comment.create_time = datetime.datetime.now()
+                    comment.save()
+                return JsonResponse({'message': "评论成功"})
+            except Exception as e:
+                traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
@@ -396,7 +395,7 @@ class publication:
                     like11 = Like1()
                     like11.comment = comment
                     like11.user = user
-                    like11.create_time = datetime.datetime
+                    like11.create_time = datetime.datetime.now()
                     like11.save()
                     comment.count += 1
                     comment.save()
@@ -425,7 +424,7 @@ class publication:
                 paper = Paper.objects.filter(paper_id=paper_id).first()
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
-                like = Like.objects.filter(user=user,paper=paper)
+                like = Like.objects.filter(user=user,paper=paper).first()
                 if like is None:
                     like_1=Like()
                     like_1.paper=paper
@@ -433,6 +432,7 @@ class publication:
                     paper.like_count += 1
                     paper.save_paper_data()
                     paper.save()
+                    like_1.save()
                 else:
                     like.delete()
                     paper.like_count-=1
@@ -465,7 +465,7 @@ class publication:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
                 elif favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
-                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                collection = Collection.objects.filter(user=user,paper_id=paper_id,favorites=favorite).first()
                 if collection is not None:
                     return JsonResponse({'error':0,'msg':"收藏关系已存在"})
                 else:
@@ -500,10 +500,15 @@ class publication:
                 data_body = request.POST
                 paper_id = data_body.get('paper_id')
                 paper = Paper.objects.filter(paper_id=paper_id).first()
-                collection = Collection.objects.filter(user=user,paper_id=paper_id).first()
+                if paper is None:
+                    return JsonResponse({'error': 0, 'message': "文章不存在"})
+                favorites_id = data_body.get('favorites_id')
+                favorite = Favorites.objects.filter(field_id=favorites_id).first()
+                if favorite is None:
+                    return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
+                collection = Collection.objects.filter(user=user, paper_id=paper_id,favorites=favorite).first()
                 if collection is None:
                     return JsonResponse({'error': 0, 'message': "不具备收藏关系"})
-                favorite = collection.favorites
                 if favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
                 else:
