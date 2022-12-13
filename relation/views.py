@@ -1077,3 +1077,35 @@ def deleteHistory(request):
         return JsonResponse({'errno': 0, 'msg': "删除成功"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def getSolvedTaskNum(request):
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    if payload.get('admin') is False:
+        return JsonResponse({'errno': -999, 'msg': "没有管理员权限"})
+    if request.method == 'GET':
+        data = []
+        now = datetime.datetime.now().date()
+        x = now
+        for i in range(7):
+            y = x + datetime.timedelta(days=1)
+            try:
+                num1 = len(Complaincomment.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complaincomment.DoesNotExist:
+                num1 = 0
+            try:
+                num2 = len(Complainauthor.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complainauthor.DoesNotExist:
+                num2 = 0
+            try:
+                num3 = len(Complainpaper.objects.filter(audit_time__gte=x, audit_time__lte=y))
+            except Complainpaper.DoesNotExist:
+                num3 = 0
+            num = num1 + num2 + num3
+            data.append(num)
+            x = x - datetime.timedelta(days=1)
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
