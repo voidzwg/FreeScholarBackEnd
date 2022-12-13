@@ -11,6 +11,7 @@ from FreeScholarBackEnd.settings import SECRETS
 from publication.views import publication
 from relation.models import *
 from utils.Token import Authentication
+from utils.media import *
 from serialization.views import Serialization
 
 @csrf_exempt
@@ -646,7 +647,7 @@ def newFavorites(request):
                 return JsonResponse({'errno': 1, 'msg': "与现有收藏夹重名"})
             curr_time = datetime.datetime.now()
             time_str = datetime.datetime.strftime(curr_time, '%Y-%m-%d %H:%M:%S')
-            favorite = Favorites(title=title, create_time=time_str, count=0, user_id=user_id)
+            favorite = Favorites(title=title, create_time=time_str, count=0, user_id=user_id, avatar=DEFAULT_COVERIMG)
             favorite.save()
             return JsonResponse({'errno': 0, 'msg': "创建成功"})
         except Exception as e:
