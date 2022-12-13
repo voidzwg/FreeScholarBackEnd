@@ -425,7 +425,7 @@ class publication:
                 paper = Paper.objects.filter(paper_id=paper_id).first()
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
-                like = Like.objects.filter(user=user,paper=paper)
+                like = Like.objects.filter(user=user,paper=paper).first()
                 if like is None:
                     like_1=Like()
                     like_1.paper=paper
@@ -433,6 +433,7 @@ class publication:
                     paper.like_count += 1
                     paper.save_paper_data()
                     paper.save()
+                    like_1.save()
                 else:
                     like.delete()
                     paper.like_count-=1
