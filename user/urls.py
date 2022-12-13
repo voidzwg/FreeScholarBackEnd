@@ -13,6 +13,7 @@ urlpatterns = [
     path('complainSochlar/', complainSochlar),
     path('complainComment/', complainComment),
     path('complainPaper/', complainSochlar),
-    path('admitScholar/', sendEmail),
-    path('checkCode/', checkCode)
+    path('sendEmail/', sendEmail),
+    path('checkCode/', checkCode),
+    path('admitScholar/', admit_code),
 ]
