@@ -9,6 +9,7 @@ from utils import Rating
 from FreeScholarBackEnd.settings import *
 import uuid
 
+
 class publication:
 
     def GetWord(request):
@@ -181,11 +182,11 @@ class publication:
                 if 'sort' in para:
                     if para['sort'] == 'time':
                         s = {
-                            "year":{"order":"desc"}
+                            "year": {"order": "desc"}
                         }
                     elif para['sort'] == 'citation':
                         s = {
-                            "n_citation":{"order":"desc"}
+                            "n_citation": {"order": "desc"}
                         }
                     sort.append(s)
                 body = {
@@ -226,7 +227,7 @@ class publication:
                         },
 
                     },
-                    "sort":sort,
+                    "sort": sort,
                     "from": str(page),
                     "size": 20,
                     "min_score": 5
@@ -279,55 +280,52 @@ class publication:
 
     def ReadPaper(request):
         if request.method == 'POST':
-            if request.method == 'POST':
-                fail, payload = Authentication.authentication(request.META)
-                if fail:
-                    return JsonResponse(payload)
-                try:
-                    user_id = payload.get('id')
-                    user = User.objects.get(field_id=user_id)
-                except User.DoesNotExist:
-                    return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+            fail, payload = Authentication.authentication(request.META)
+            if fail:
+                return JsonResponse(payload)
             try:
-                data = request.body.decode()
-                data_body=json.loads(data)
-                paper_id = data_body.get('paper_id')
-                paper_name = data_body.get('paper_name')
-                viewHistory=Viewhistory()
-                viewHistory.user=user
-                viewHistory.paper_id=paper_id
-                viewHistory.time=datetime.datetime
-                viewHistory.save()
-                paper = Paper.objects.filter(paper_id=paper_id).first()
-                comments = Comment.objects.filter(paper_id=paper_id)
-                comment_result = []
-                for comment in comments:
-                    tmp = {
-                        "avatar": comment.user.avatar,
-                        "username": comment.user.name,
-                        "text": comment.content
-                    }
-                    comment_result.append(tmp)
-                if paper is None:
-                    paper = Paper()
-                    paper.paper_id = paper_id
-                    paper.paper_name = paper_name
-                    paper.read_count = 1
-                    paper.like_count = 0
-                    paper.collect_count = 0
-                    paper.save()
-                    paper.save_paper_data()
-                else:
-                    paper.read_count += 1
-                    paper.save()
-                    paper.save_paper_data()
-                return JsonResponse(
-                    {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.collect_count,
-                     'comment': comment_result})
-            except Exception as e:
-                traceback.print_exc()
-        else:
-            return JsonResponse({'error': 0, 'message': "请求方式错误"})
+                user_id = payload.get('id')
+                user = User.objects.get(field_id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
+        try:
+            data = request.body.decode()
+            data_body = json.loads(data)
+            paper_id = data_body.get('paper_id')
+            paper_name = data_body.get('paper_name')
+            viewHistory = Viewhistory()
+            viewHistory.user = user
+            viewHistory.paper_id = paper_id
+            viewHistory.time = datetime.datetime.now()
+            viewHistory.save()
+            paper = Paper.objects.filter(paper_id=paper_id).first()
+            comments = Comment.objects.filter(paper_id=paper_id)
+            comment_result = []
+            for comment in comments:
+                tmp = {
+                    "avatar": comment.user.avatar,
+                    "username": comment.user.name,
+                    "text": comment.content
+                }
+                comment_result.append(tmp)
+            if paper is None:
+                paper = Paper()
+                paper.paper_id = paper_id
+                paper.paper_name = paper_name
+                paper.read_count = 1
+                paper.like_count = 0
+                paper.collect_count = 0
+                paper.save()
+                paper.save_paper_data()
+            else:
+                paper.read_count += 1
+                paper.save()
+                paper.save_paper_data()
+            return JsonResponse(
+                {'like_count': paper.like_count, 'read_count': paper.read_count, 'collect_count': paper.collect_count,
+                 'comment': comment_result})
+        except Exception as e:
+            traceback.print_exc()
 
     def MakeComment(request):
         if request.method == 'POST':
@@ -360,6 +358,7 @@ class publication:
                     traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
+
     def LikeComment(request):
         if request.method == 'POST':
             if request.method == 'POST':
@@ -373,22 +372,21 @@ class publication:
                     return JsonResponse({'errno': 1, 'msg': "用户不存在"})
                 try:
                     data_body = request.POST
-                    comment_id=data_body.get('comment_id')
+                    comment_id = data_body.get('comment_id')
                     like1 = Like1()
-                    like1.comment_id=comment_id
-                    like1.user=user
-                    like1.create_time=datetime.datetime
+                    like1.comment_id = comment_id
+                    like1.user = user
+                    like1.create_time = datetime.datetime
                     like1.save()
-                    comment=Comment.objects.filter(comment_id=comment_id).first()
+                    comment = Comment.objects.filter(comment_id=comment_id).first()
                     if comment is None:
-                        return JsonResponse({'error':1, 'msg':"评论不存在"})
-                    comment.count+=1
+                        return JsonResponse({'error': 1, 'msg': "评论不存在"})
+                    comment.count += 1
                     comment.save()
                 except Exception as e:
                     traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
-
 
     def LikePaper(request):
         if request.method == 'POST':
@@ -460,8 +458,8 @@ class publication:
                     "id": idList
                 }
             },
-            "from":0,
-            "size":10000,
+            "from": 0,
+            "size": 10000,
         }
         resp = client.search(index='paper', body=body)
         hits = resp['hits']['hits']
@@ -561,6 +559,7 @@ class publication:
                 return JsonResponse({'errno': '1'})
         except Exception as e:
             traceback.print_exc()
+
     def addPub(request):
         try:
             if request.method == 'POST':
@@ -568,8 +567,8 @@ class publication:
                 id = uuid.uuid1().hex
                 document = {}
                 document["id"] = id
-                document["title"]= para['title']
-                document["authors"]=para['authors']
+                document["title"] = para['title']
+                document["authors"] = para['authors']
                 if "abstract" in para:
                     document["abstract"] = para['abstract']
                 if "year" in para:
@@ -590,13 +589,13 @@ class publication:
                     document["issn"] = para["issn"]
                 if "pdf" in para:
                     document["pdf"] = para["pdf"]
-                resp = client.index(index='paper',document=document)
+                resp = client.index(index='paper', document=document)
                 if resp['result'] == 'created':
-                    return JsonResponse({'errno': '0',"msg":"成功"})
+                    return JsonResponse({'errno': '0', "msg": "成功"})
                 else:
                     return JsonResponse({'errno': '2', "msg": "失败"})
             else:
-                return JsonResponse({'errno': '1',"msg":"请求方式错误"})
+                return JsonResponse({'errno': '1', "msg": "请求方式错误"})
 
         except Exception as e:
             traceback.print_exc()
