@@ -25,16 +25,17 @@ class GetBaseInfo(View):
         scholar = scholar[0]
         user = scholar.user
         print(user)
+        print(scholar.count)
+        print(scholar.hot_index)
         json_data = {
-            "Hotpoint":scholar.count*347+443*(scholar+1)+666,
+            "Hotpoint": scholar.count * 347 + 443 * (scholar.hot_index + 1) + 666,
             'scholar_id': scholar.field_id,
-            'user_id': scholar.user_id,
+            'user_id': user.field_id,
             "bio": user.bio,
             "name": user.name,
             "visitors": scholar.count,
             'bgimg': scholar.avatar,
             'papers': scholar.paper_show
-
         }
         if is_login:
             uid = payload.get('id')
