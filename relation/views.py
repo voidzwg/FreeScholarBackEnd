@@ -960,9 +960,16 @@ def processRequest(request):
                     obj.status = 2
                 else:
                     obj.status = 1
+                scholar_id = obj.scholar_id
                 obj.audit_time = time_str
                 obj.reply = reply
                 obj.save()
+                scholar = Scholar.objects.get(field_id=scholar_id)
+                aim_id = scholar.user_id
+                user = User.objects.get(field_id=aim_id)
+                user.identity = 1
+                user.save()
+                scholar.delete()
             elif type1 == "2":
                 try:
                     obj = Complainpaper.objects.get(field_id=_id)
@@ -1010,8 +1017,11 @@ def processRequest(request):
                             return JsonResponse({'errno': 1, 'msg': "该学者已存在或该用户已经是学者"})
                     except Scholar.DoesNotExist:
                         name = Scholaradmit.name
+                    obj2 = User.objects.get(field_id=user_id1)
+                    obj2.identity = 2
+                    obj2.save()
                     Scholar.objects.create(user_id=user_id1, author_id=author_id,
-                                            name=name, affi="{}", claim_time=time_str)
+                                            name=name, affi="{}", claim_time=time_str, count=0)
                 else:
                     obj.status = 1
                 obj.audit_time = time_str
