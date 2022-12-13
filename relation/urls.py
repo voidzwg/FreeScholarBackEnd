@@ -37,6 +37,7 @@ urlpatterns = [
     path('getPendingScholarApplication', getPendingScholarApplication),
     path('processRequest', processRequest),
     path('showFavorites', showFavorites),
-    path('getRecentRecord',getRecentRecord),
-
+    path('getRecentRecord', getRecentRecord),
+    path('getHistoryByUserId', getHistoryByUserId),
+    path('deleteHistory', deleteHistory),
 ]

@@ -11,7 +11,7 @@ from FreeScholarBackEnd.settings import SECRETS
 from publication.views import publication
 from relation.models import *
 from utils.Token import Authentication
-
+from serialization.views import Serialization
 
 @csrf_exempt
 def test(request):
@@ -1031,3 +1031,29 @@ def showFavorites(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
+def getHistoryByUserId(request):
+    if request.method == 'POST':
+        _id = request.POST.get('_id')
+        data = []
+        try:
+            res = Viewhistory.objects.filter(user_id=_id)
+        except Viewhistory.DoesNotExist:
+            res = None
+        for i in range(len(res)):
+            data.append({'_id': res[i].field_id, 'user_id': res[i].user_id, 'paper_id': res[i].paper_id,
+                     'time': res[i].time})
+        return JsonResponse(data, safe=False)
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def deleteHistory(request):
+    if request.method == 'POST':
+        _id = request.POST.get('history_id')
+        try:
+            Viewhistory.objects.get(field_id=_id).delete()
+        except Viewhistory.DoesNotExist:
+            return JsonResponse({'errno': 1, 'msg': "历史记录不存在"})
+        return JsonResponse({'errno': 0, 'msg': "删除成功"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})

@@ -10,9 +10,9 @@ urlpatterns = [
     path('register/', register),
     path('login/', login),
     path('logout/', logout),
-    path('complainSochlar/',complainSochlar),
-    path('complainComment/',complainComment),
-    path('complainPaper/',complainSochlar),
-    path('sendEmail/',sendEmail),
-    path('checkCode/',checkCode)
+    path('complainSochlar/', complainSochlar),
+    path('complainComment/', complainComment),
+    path('complainPaper/', complainSochlar),
+    path('admitScholar/', sendEmail),
+    path('checkCode/', checkCode)
 ]
