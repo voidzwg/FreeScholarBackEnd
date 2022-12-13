@@ -77,7 +77,8 @@ def getBaseInfo(request):
             affi = scholar.affi
         except Scholar.DoesNotExist:
             affi = None
-            scholar_id = 0
+            scholar_id = None
+            author_id = None
         try:
             user_count = len(Follow.objects.filter(user_id=user_id))
         except Follow.DoesNotExist:
