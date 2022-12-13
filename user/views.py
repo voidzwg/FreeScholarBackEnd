@@ -252,7 +252,7 @@ def complainSochlar(request):
     user = User.objects.get(field_id=payload.get('id'))
     scholar_id = request.POST.get('scholar_id')
     reason = request.POST.get('reason')
-    scholar = Scholar.objects.filter(scholar_id=scholar_id).first()
+    scholar = Scholar.objects.filter(field_id=scholar_id).first()
     if scholar is None:
         return JsonResponse({'error': 1, 'message': "学者不存在"})
     complain = Complainauthor()
@@ -273,27 +273,28 @@ def complainComment(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user = User.objects.get(field_id=payload.get('id'))
-    comment_id = request.POST.get('comment_id')
-    reported_id = request.POST.get('reported_id')
-    reported = User.objects.filter(field_id=reported_id).first()
-    if reported is None:
-        return JsonResponse({'error': 1, 'message': "被举报者不存在"})
-    reason = request.POST.get('reason')
-    comment = Comment.objects.filter(comment_id=comment_id).first()
-    if comment is None:
-        return JsonResponse({'error': 1, 'message': "评论不存在"})
-    complain = Complaincomment()
-    complain.user = user
-    complain.create_time = datetime.datetime.now()
-    complain.audit_time = datetime.datetime.now()
-    complain.status = 0
-    complain.comment = comment
-    complain.report = user
-    complain.reported = reported
-    complain.reason = reason
-    complain.save()
-    return JsonResponse({'errno': 0, 'msg': "success"})
+    try:
+        user = User.objects.get(field_id=payload.get('id'))
+        comment_id = request.POST.get('comment_id')
+        comment=Comment.objects.filter(field_id=comment_id).first()
+        if comment is None:
+            return JsonResponse({'error': 1, 'message': "评论不存在"})
+        reported =comment.user
+        if reported is None:
+            return JsonResponse({'error': 1, 'message': "被举报者不存在"})
+        reason = request.POST.get('reason')
+        complain = Complaincomment()
+        complain.create_time = datetime.datetime.now()
+        complain.audit_time = datetime.datetime.now()
+        complain.status = 0
+        complain.comment = comment
+        complain.report = user
+        complain.reported = reported
+        complain.reason = reason
+        complain.save()
+        return JsonResponse({'errno': 0, 'msg': "success"})
+    except Exception as e:
+        traceback.print_exc()
 
 
 @csrf_exempt
@@ -303,19 +304,24 @@ def complainPaper(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user = User.objects.get(field_id=payload.get('id'))
-    paper_id = request.POST.get('paper_id')
-    reason = request.POST.get('reason')
-    complain = Complainpaper()
-    complain.user = user
-    complain.create_time = datetime.datetime.now()
-    complain.audit_time = datetime.datetime.now()
-    complain.status = 0
-    complain.paper_id = paper_id
-    complain.reason = reason
-    complain.save()
-    return JsonResponse({'errno': 0, 'msg': "success"})
-
+    try:
+        user = User.objects.get(field_id=payload.get('id'))
+        scholar=Scholar.objects.filter(user=user).first()
+        if scholar is None:
+            return JsonResponse({'error':1,'msg':"用户不是学者"})
+        paper_id = request.POST.get('paper_id')
+        reason = request.POST.get('reason')
+        complain = Complainpaper()
+        complain.user = scholar
+        complain.create_time = datetime.datetime.now()
+        complain.audit_time = datetime.datetime.now()
+        complain.status = 0
+        complain.paper_id = paper_id
+        complain.reason = reason
+        complain.save()
+        return JsonResponse({'errno': 0, 'msg': "success"})
+    except Exception as e:
+        traceback.print_exc()
 
 @csrf_exempt
 def sendEmail(request):

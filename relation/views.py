@@ -434,27 +434,31 @@ def getRecentRecord(request):
                     dict[complainpaper.audit_time] = complainpaper.field_id
                 list1.append(complainpaper)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
+            count=0
             for complaincomment in Complaincomment.objects.all():
                 if complaincomment.audit_time is not None:
                     dict[complaincomment.audit_time] = complaincomment.field_id
                 list2.append(complaincomment)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
+            count=0
             for complainauthor in Complainauthor.objects.all():
                 if complainauthor.audit_time is not None:
                     dict[complainauthor.audit_time] = complainauthor.field_id
                 list3.append(complainauthor)
                 count += 1
-                if count > 5:
+                if count > 4:
                     break
             result = []
             keys = list(dict.keys())
-            keys.sort(reverse=False)
+            keys.sort(reverse=True)
             admin_avatar=User.objects.get(field_id=21).avatar
+            count=0
             for key in keys:
+                print(key)
                 for i in list1:
                     if i.audit_time == key:
                         if i.status == 0:
@@ -518,9 +522,9 @@ def getRecentRecord(request):
                                 'time': i.audit_time
                             }
                         result.append(tmp)
-                    count += 1
-                    if count > 5:
-                        break
+                count += 1
+                if count > 4:
+                    break
 
             return JsonResponse({'result': result})
         except Exception as e:
