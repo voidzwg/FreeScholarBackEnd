@@ -291,8 +291,10 @@ class publication:
                 uid = payload.get('id')
             else:
                 uid = None
-            paper_id = request.POST.get('paper_id')
-            paper_name = request.POST.get('paper_name')
+            data = request.body.decode()
+            data_body = json.loads(data)
+            paper_id = data_body.get('paper_id')
+            paper_name = data_body.get('paper_name')
             if login:
                 vh = Viewhistory(user_id=uid, paper_id=paper_id, time=datetime.datetime.now())
                 vh.save()
