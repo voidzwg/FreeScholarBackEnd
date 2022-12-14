@@ -288,9 +288,9 @@ class publication:
             fail, payload = Authentication.authentication(request.META)
             if fail:
                 login = False
-                uid = payload.get('id')
-            else:
                 uid = None
+            else:
+                uid = payload.get('id')
             data = request.body.decode()
             data_body = json.loads(data)
             paper_id = data_body.get('paper_id')
