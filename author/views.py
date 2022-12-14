@@ -70,12 +70,13 @@ class author:
                                                 }},
 
                                                 {"term": {
-                                                    "authors.id": a['id']
+                                                     "authors.name.keyword": a['name']
                                                 }}
                                             ]
                                         }
                                     }
                                 }
+                                count = client.count(index='paper', body=body)
                                 item = {
                                     'id':a['id'],
                                     'name':a['name'],
@@ -106,6 +107,9 @@ class author:
                                     'count':count['count'],
                                 }
                                 authors.append(item)
+                    for i in authors:
+                        if i['count'] == 0:
+                            i['count'] = 1
                     return JsonResponse({'data':data,'coworkers':authors})
 
                 else:
