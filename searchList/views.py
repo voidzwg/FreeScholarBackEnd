@@ -16,8 +16,10 @@ class PaperData(View):
             else:
                 return JsonResponse(payload)
         pid = request.POST.get('p_id')
+        paper = Paper.objects.get(paper_id=pid)
         json_data = {
-            'collection_num': Paper.objects.get(paper_id=pid).collect_count,
+            'like_num': paper.like_count,
+            'collection_num': paper.collect_count,
             'comment_num': Comment.objects.filter(paper_id=pid).count()
         }
         if has_login:

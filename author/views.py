@@ -76,7 +76,6 @@ class author:
                                         }
                                     }
                                 }
-                                count = client.count(index='paper',body=body)
                                 item = {
                                     'id':a['id'],
                                     'name':a['name'],
