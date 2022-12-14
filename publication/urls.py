@@ -17,6 +17,6 @@ urlpatterns = [
     path('getPaperById/', views.publication.getPaperById),
     path('UnCollectPaper/',views.publication.UnCollectPaper),
     path('MakeComment/',views.publication.MakeComment),
-    path('LikeComment/',views.publication.LikeComment)
+    path('LikeComment/',views.publication.LikeComment),
 ]
 

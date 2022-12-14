@@ -268,7 +268,7 @@ class publication:
                 for i in Top_paper:
                     field_id = i[0].decode()
                     field = Field.objects.get(field_id=field_id)
-                    word_data.append({'word_name': field.name})
+                    word_data.append({'word_name': field.name,'value':field.count})
                 result = {
                     'word': word_data
                 }

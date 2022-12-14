@@ -14,6 +14,7 @@ from utils.Token import Authentication
 from utils.media import *
 from serialization.views import Serialization
 
+
 @csrf_exempt
 def test(request):
     if request.method == 'POST':
@@ -81,7 +82,7 @@ def getBaseInfo(request):
                              'follows': user_count, 'followers': scholar_count, 'likes': counts
                                 , 'mail': mail, 'birthday': birthday, 'identity': identity, 'state': state
                                 , 'gender': gender, 'login_date': login_date, 'scholar_id': scholar_id
-                             , 'author_id': author_id})
+                                , 'author_id': author_id})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
@@ -418,7 +419,7 @@ def getRecentRecord(request):
                 count += 1
                 if count > 4:
                     break
-            count=0
+            count = 0
             for complaincomment in Complaincomment.objects.all():
                 if complaincomment.audit_time is not None:
                     dict[complaincomment.audit_time] = complaincomment.field_id
@@ -426,7 +427,7 @@ def getRecentRecord(request):
                 count += 1
                 if count > 4:
                     break
-            count=0
+            count = 0
             for complainauthor in Complainauthor.objects.all():
                 if complainauthor.audit_time is not None:
                     dict[complainauthor.audit_time] = complainauthor.field_id
@@ -437,8 +438,8 @@ def getRecentRecord(request):
             result = []
             keys = list(dict.keys())
             keys.sort(reverse=True)
-            admin_avatar=User.objects.get(field_id=21).avatar
-            count=0
+            admin_avatar = User.objects.get(field_id=21).avatar
+            count = 0
             for key in keys:
                 print(key)
                 for i in list1:
@@ -448,18 +449,18 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name':i.user.user.name,
-                                'avatar':i.user.user.avatar,
-                                'time':i.audit_time,
+                                'name': i.user.user.name,
+                                'avatar': i.user.user.avatar,
+                                'time': i.audit_time,
                             }
                         else:
                             type = 2
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name':"admin",
-                                'avatar':admin_avatar,
-                                'time':i.audit_time
+                                'name': "admin",
+                                'avatar': admin_avatar,
+                                'time': i.audit_time
                             }
                         result.append(tmp)
                 for i in list2:
@@ -478,7 +479,7 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name':"admin",
+                                'name': "admin",
                                 'avatar': admin_avatar,
                                 'time': i.audit_time
                             }
@@ -487,7 +488,7 @@ def getRecentRecord(request):
                     if i.audit_time == key:
                         if i.status == 0:
                             type = 0
-                            tmp={
+                            tmp = {
                                 'type': type,
                                 'id': i.field_id,
                                 'name': i.user.name,
@@ -499,8 +500,8 @@ def getRecentRecord(request):
                             tmp = {
                                 'type': type,
                                 'id': i.field_id,
-                                'name':"admin",
-                                'avatar':admin_avatar,
+                                'name': "admin",
+                                'avatar': admin_avatar,
                                 'time': i.audit_time
                             }
                         result.append(tmp)
@@ -513,7 +514,6 @@ def getRecentRecord(request):
             traceback.print_exc()
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
-
 
 
 @csrf_exempt
@@ -691,7 +691,6 @@ def collectFavorites(request):
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
 
 
-
 @csrf_exempt
 def getUserItemAll(request):
     fail, payload = Authentication.authentication(request.META)
@@ -712,7 +711,7 @@ def getUserItemAll(request):
             num2 = len(Scholaradmit.objects.filter(status=1) | Scholaradmit.objects.filter(status=2))
         except Scholaradmit.DoesNotExist:
             num2 = 0
-        num = num1+num2
+        num = num1 + num2
         return JsonResponse({'num': num})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -1006,7 +1005,7 @@ def processRequest(request):
                     obj2.identity = 2
                     obj2.save()
                     Scholar.objects.create(user_id=user_id1, author_id=author_id,
-                                            name=name, affi="{}", claim_time=time_str, count=0)
+                                           name=name, affi="{}", claim_time=time_str, count=0)
                 else:
                     obj.status = 1
                 obj.audit_time = time_str
@@ -1063,12 +1062,13 @@ def getHistoryByUserId(request):
         except Viewhistory.DoesNotExist:
             res = None
         for i in range(len(res)):
-            paper_id=res[i].paper_id
-            paper=Paper.objects.filter(paper_id=paper_id).first()
+            paper_id = res[i].paper_id
+            paper = Paper.objects.filter(paper_id=paper_id).first()
             if paper is None:
-                return ({'error':1,'msg':"文章不存在"})
-            data.append({'_id': res[i].field_id, 'user_id': res[i].user_id, 'paper_id': paper_id,'paper_name':paper.paper_name,
-                     'time': res[i].time})
+                return ({'error': 1, 'msg': "文章不存在"})
+            data.append({'_id': res[i].field_id, 'user_id': res[i].user_id, 'paper_id': paper_id,
+                         'paper_name': paper.paper_name,
+                         'time': res[i].time})
         return JsonResponse(data, safe=False)
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
@@ -1141,3 +1141,4 @@ def batchDeleteHistory(request):
         return JsonResponse({'errno': 0, 'msg': "删除成功"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
