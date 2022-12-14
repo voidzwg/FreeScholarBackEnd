@@ -144,7 +144,7 @@ def getBaseInfo(request):
     except User.DoesNotExist:
         return JsonResponse({'errno': 1, 'msg': "用户不存在"})
     bio = user.bio
-    avatar=user.avatar
+    avatar = user.avatar
     u_name = user.name
     try:
         user_count = len(Follow.objects.filter(user_id=user_id))
@@ -172,7 +172,7 @@ def getBaseInfo(request):
     #         counts += len(Like1.objects.filter(user_id=c_id))
     #     except Like1.DoesNotExist:
     #         counts += 0
-    return JsonResponse({'username': u_name, 'avator':avatar,'institution': affi, 'bio': bio, 'follows': user_count
+    return JsonResponse({'username': u_name, 'avator': avatar, 'institution': affi, 'bio': bio, 'follows': user_count
                             , 'followers': scholar_count})  # FIXME: avatar
 
 
@@ -221,7 +221,7 @@ def getFollowers(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user_id=payload.get('id')
+    user_id = payload.get('id')
     user = User.objects.get(field_id=payload.get('id'))
     data = []
     try:
@@ -241,6 +241,7 @@ def getFollowers(request):
         data.append(data1)
     return JsonResponse(data, safe=False)
 
+
 @csrf_exempt
 def complainSochlar(request):
     if request.method != 'POST':
@@ -249,20 +250,21 @@ def complainSochlar(request):
     if fail:
         return JsonResponse(payload)
     user = User.objects.get(field_id=payload.get('id'))
-    scholar_id=request.POST.get('scholar_id')
-    reason=request.POST.get('reason')
-    scholar = Scholar.objects.filter(scholar_id=scholar_id).first()
+    scholar_id = request.POST.get('scholar_id')
+    reason = request.POST.get('reason')
+    scholar = Scholar.objects.filter(field_id=scholar_id).first()
     if scholar is None:
-        return JsonResponse({'error':1,'message':"学者不存在"})
+        return JsonResponse({'error': 1, 'message': "学者不存在"})
     complain = Complainauthor()
-    complain.user=user
-    complain.create_time=datetime.datetime
-    complain.audit_time=datetime.datetime
-    complain.status=0
-    complain.scholar=scholar
-    complain.reason=reason
+    complain.user = user
+    complain.create_time = datetime.datetime.now()
+    complain.audit_time = datetime.datetime.now()
+    complain.status = 0
+    complain.scholar = scholar
+    complain.reason = reason
     complain.save()
-    return JsonResponse({'errno':0,'msg':"success"})
+    return JsonResponse({'errno': 0, 'msg': "success"})
+
 
 @csrf_exempt
 def complainComment(request):
@@ -271,27 +273,29 @@ def complainComment(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user = User.objects.get(field_id=payload.get('id'))
-    comment_id=request.POST.get('comment_id')
-    reported_id=request.POST.get('reported_id')
-    reported=User.objects.filter(field_id=reported_id).first()
-    if reported is None:
-        return JsonResponse({'error': 1, 'message': "被举报者不存在"})
-    reason=request.POST.get('reason')
-    comment = Comment.objects.filter(comment_id=comment_id).first()
-    if comment is None:
-        return JsonResponse({'error':1,'message':"评论不存在"})
-    complain = Complaincomment()
-    complain.user=user
-    complain.create_time=datetime.datetime
-    complain.audit_time=datetime.datetime
-    complain.status=0
-    complain.comment=comment
-    complain.report=user
-    complain.reported=reported
-    complain.reason=reason
-    complain.save()
-    return JsonResponse({'errno':0,'msg':"success"})
+    try:
+        user = User.objects.get(field_id=payload.get('id'))
+        comment_id = request.POST.get('comment_id')
+        comment=Comment.objects.filter(field_id=comment_id).first()
+        if comment is None:
+            return JsonResponse({'error': 1, 'message': "评论不存在"})
+        reported =comment.user
+        if reported is None:
+            return JsonResponse({'error': 1, 'message': "被举报者不存在"})
+        reason = request.POST.get('reason')
+        complain = Complaincomment()
+        complain.create_time = datetime.datetime.now()
+        complain.audit_time = datetime.datetime.now()
+        complain.status = 0
+        complain.comment = comment
+        complain.report = user
+        complain.reported = reported
+        complain.reason = reason
+        complain.save()
+        return JsonResponse({'errno': 0, 'msg': "success"})
+    except Exception as e:
+        traceback.print_exc()
+
 
 @csrf_exempt
 def complainPaper(request):
@@ -300,19 +304,24 @@ def complainPaper(request):
     fail, payload = Authentication.authentication(request.META)
     if fail:
         return JsonResponse(payload)
-    user = User.objects.get(field_id=payload.get('id'))
-    paper_id=request.POST.get('paper_id')
-    reason=request.POST.get('reason')
-    complain = Complainpaper()
-    complain.user=user
-    complain.create_time=datetime.datetime
-    complain.audit_time=datetime.datetime
-    complain.status=0
-    complain.paper_id=paper_id
-    complain.reason=reason
-    complain.save()
-    return JsonResponse({'errno':0,'msg':"success"})
-
+    try:
+        user = User.objects.get(field_id=payload.get('id'))
+        scholar=Scholar.objects.filter(user=user).first()
+        if scholar is None:
+            return JsonResponse({'error':1,'msg':"用户不是学者"})
+        paper_id = request.POST.get('paper_id')
+        reason = request.POST.get('reason')
+        complain = Complainpaper()
+        complain.user = scholar
+        complain.create_time = datetime.datetime.now()
+        complain.audit_time = datetime.datetime.now()
+        complain.status = 0
+        complain.paper_id = paper_id
+        complain.reason = reason
+        complain.save()
+        return JsonResponse({'errno': 0, 'msg': "success"})
+    except Exception as e:
+        traceback.print_exc()
 
 @csrf_exempt
 def sendEmail(request):
@@ -323,18 +332,14 @@ def sendEmail(request):
         return JsonResponse(payload)
     user = User.objects.get(field_id=payload.get('id'))
     try:
-        data_body=request.POST
+        data_body = request.POST
 
         email = data_body.get('email')
         if email is None:
             return JsonResponse({'result': 0, 'msg': "请检查你的请求体"})
         if not validate_email(email):
             return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
-        # if Main.objects.filter(email=email).exists():
-        #     result = {'result': 0, 'msg': "邮箱已被使用"}
-        #     print(result)
-        #     return JsonResponse(result)
-        send_result = sendCodeEmail(email,user.field_id)
+        send_result = sendCodeEmail(email, user.field_id)
         if send_result == 0:
             result = {'result': 0, 'msg': '发送失败!请检查邮箱格式'}
         else:
@@ -343,6 +348,7 @@ def sendEmail(request):
         return JsonResponse(result)
     except Exception as e:
         traceback.print_exc()
+
 
 @csrf_exempt
 def checkCode(request):
@@ -356,10 +362,39 @@ def checkCode(request):
         data_body = request.POST
 
         code = data_body.get('code')
-        e=CheckCode(code,user.field_id)
+        e = CheckCode(code, user.field_id)
         if e is False:
-            return JsonResponse({'error':1,'msg':"验证码错误"})
+            return JsonResponse({'error': 1, 'msg': "验证码错误"})
         else:
-            return JsonResponse({'msg':"验证码正确"})
+            return JsonResponse({'msg': "验证码正确"})
     except Exception as e:
         traceback.print_exc()
+
+
+def admit_code(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'msg': "请求方式错误"})
+    fail, payload = Authentication.authentication(request.META)
+    if fail:
+        return JsonResponse(payload)
+    data_body = request.POST
+
+    email = data_body.get('email')
+    author_id = data_body.get('author_id')
+    name = data_body.get('name')
+    if email is None:
+        return JsonResponse({'result': 0, 'msg': "请检查你的请求体"})
+    if not validate_email(email):
+        return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
+    now_date = datetime.datetime.now()
+    admit_1=Scholaradmit.objects.filter(user_id=payload.get('id')).first()
+    if admit_1 is not None:
+        return JsonResponse({'error':1,'msg':"请勿重复申请"})
+    user=User.objects.filter(field_id=payload.get('id')).first()
+    scholar=Scholar.objects.filter(user=user).first()
+    if scholar is not None:
+        return JsonResponse({'error': 1, 'msg': "已经是学者"})
+    admit = Scholaradmit(user_id=payload.get('id'), author_id=author_id, name=name, email=email,
+                         create_time=now_date, status=0)
+    admit.save()
+    return JsonResponse({'errno': 0, 'msg': "验证成功"})

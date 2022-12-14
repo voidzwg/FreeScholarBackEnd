@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.generic import View
 
 from utils.Token import Authentication
-from .models import Comment, Collection
+from .models import Paper, Comment, Collection
 
 
 class PaperData(View):
@@ -17,7 +17,7 @@ class PaperData(View):
                 return JsonResponse(payload)
         pid = request.POST.get('p_id')
         json_data = {
-            'collection_num': Collection.objects.filter(paper_id=pid).count(),
+            'collection_num': Paper.objects.get(paper_id=pid).collect_count,
             'comment_num': Comment.objects.filter(paper_id=pid).count()
         }
         if has_login:

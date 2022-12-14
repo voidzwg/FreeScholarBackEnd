@@ -14,28 +14,25 @@ class GetBaseInfo(View):
         if fail:
             is_login = False
         author_id = request.GET.get('author_id')
-        print(author_id, is_login)
         if self.model is None:
             return JsonResponse({'errno': -1, 'msg': "模型错误"})
-        print(self.model)
         scholar = self.model.objects.filter(author_id=author_id)
-        print(scholar)
         if not scholar:
             return JsonResponse({'errno': 1, 'msg': "学者身份未认领"})
         scholar = scholar[0]
         user = scholar.user
-        print(user)
         json_data = {
-            "Hotpoint":scholar.count*347+443*(scholar+1)+666,
+            "Hotpoint": scholar.count * 347 + 443 * (scholar.hot_index + 1) + 666,
             'scholar_id': scholar.field_id,
-            'user_id': scholar.user_id,
+            'user_id': user.field_id,
             "bio": user.bio,
             "name": user.name,
             "visitors": scholar.count,
             'bgimg': scholar.avatar,
             'papers': scholar.paper_show
-
         }
+        scholar.count += 1
+        scholar.save()
         if is_login:
             uid = payload.get('id')
             follow = Follow.objects.filter(user_id=uid, scholar=scholar)
@@ -43,4 +40,8 @@ class GetBaseInfo(View):
                 json_data['followed'] = True
             else:
                 json_data['followed'] = False
+            if user.field_id == uid:
+                json_data['is_mine'] = True
+            else:
+                json_data['is_mine'] = False
         return JsonResponse(json_data, safe=False)

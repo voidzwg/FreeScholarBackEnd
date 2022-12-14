@@ -164,29 +164,36 @@ class Notice(models.Model):
 
 class Scholar(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    user = models.ForeignKey('User', models.DO_NOTHING)
+    user = models.ForeignKey('User', models.DO_NOTHING, related_name='user')
     name = models.CharField(max_length=255, blank=True, null=True)
     affi = models.JSONField(blank=True, null=True)
     field = models.CharField(max_length=255, blank=True, null=True)
     hot_index = models.IntegerField(blank=True, null=True)
     claim_time = models.DateTimeField(blank=True, null=True)
     author_id = models.TextField(blank=True, null=True)
+    paper_show = models.JSONField(blank=True, null=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
+    count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'Scholar'
 
 
-class Scholarportal(models.Model):
+class Scholaradmit(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
-    scholar = models.ForeignKey(Scholar, models.DO_NOTHING)
-    paper_show = models.JSONField(blank=True, null=True)
-    bgp = models.CharField(max_length=255, blank=True, null=True)
-    count = models.IntegerField(blank=True, null=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+    author_id = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+    audit_time = models.DateTimeField(blank=True, null=True)
+    status = models.IntegerField(blank=True, null=True)
+    reply = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'ScholarPortal'
+        db_table = 'ScholarAdmit'
 
 
 class User(models.Model):

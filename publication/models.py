@@ -154,6 +154,15 @@ class Like1(models.Model):
         managed = False
         db_table = 'Like1'
 
+class Like(models.Model):
+    field_id = models.AutoField(db_column='field_id', primary_key=True)  # Field renamed because it started with '_'.
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+    paper = models.ForeignKey('Paper', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Like'
+
 
 class Message(models.Model):
     field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.

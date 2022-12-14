@@ -10,7 +10,7 @@ from django_redis import get_redis_connection
 os.environ['DJANGO_SETTINGS_MODULE'] = 'mysite.settings'
 
 email_connection = get_redis_connection()
-expire = 60 * 2
+expire = 60
 email_connection.expire('email', expire)
 
 
@@ -30,7 +30,7 @@ def sendCodeEmail(email, id):
 
     email_title = "Free-Scholar系统邮箱验证码"
     email_body = "欢迎来到Free-Scholar系统!\n"
-    email_body += "您的认领门户申请邮箱验证码为：{0}, 该验证码有效时间为两分钟，请及时进行验证.\n".format(code)
+    email_body += "您的认领门户申请邮箱验证码为：{0}, 该验证码有效时间为一分钟，请及时进行验证.\n".format(code)
     email_body += "如果您从未认领门户申请,请忽略该邮件."
 
     send_status = send_mail(email_title, email_body, '810607510@qq.com', [email])
