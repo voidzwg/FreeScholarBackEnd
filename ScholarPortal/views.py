@@ -40,4 +40,8 @@ class GetBaseInfo(View):
                 json_data['followed'] = True
             else:
                 json_data['followed'] = False
+            if user.field_id == uid:
+                json_data['is_mine'] = True
+            else:
+                json_data['is_mine'] = False
         return JsonResponse(json_data, safe=False)
