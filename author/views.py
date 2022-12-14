@@ -115,3 +115,13 @@ class author:
                 return JsonResponse({'err':'1','msg':'request method error! post expected.'})
         except Exception as e:
             traceback.print_exc()
+
+    def search(request):
+        if request.method == 'POST':
+            try:
+                name= request.POST.get('name')
+
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'err': '1', 'msg': 'request method error! post expected.'})

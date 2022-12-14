@@ -552,8 +552,10 @@ class publication:
                 resp = client.search(index='paper', body=body)
                 if resp['hits']['total']['value'] > 0:
                     return JsonResponse({'paper': resp['hits']['hits'][0]['_source']})
+                else:
+                    return JsonResponse({"error":2,"msg":"不存在此文献"})
             else:
-                return JsonResponse({'errno': '1'})
+                return JsonResponse({'errno': 1})
         except Exception as e:
             traceback.print_exc()
     def addPub(request):
@@ -593,5 +595,42 @@ class publication:
             else:
                 return JsonResponse({'errno': '1',"msg":"请求方式错误"})
 
+        except Exception as e:
+            traceback.print_exc()
+    def recommend(request):
+        try:
+            if request.method == 'POST':
+
+                id = request.POST.get('id')
+                body = {
+                    "query": {
+                        "term": {
+                            "id": id
+                        }
+                    }
+                }
+                resp = client.search(index='paper', body=body)
+                if resp['hits']['total']['value'] > 0:
+                    drc= resp['hits']['hits'][0]['_source']
+                    title = drc['title']
+                    keywords = drc['keywords']
+                    body = {
+                        "query": {
+                                "match":{
+                                    "title":title,
+                                }
+                        },
+                        "size":4
+                        }
+                    recommend = client.search(index='paper', body=body)
+                    data = []
+                    for h in recommend['hits']['hits']:
+                        if h['_source']['id'] != id:
+                            data.append(h['_source'])
+                    return JsonResponse({"data":data})
+                else:
+                    return JsonResponse({"error": 2, "msg": "出错"})
+            else:
+                return JsonResponse({'errno': 1})
         except Exception as e:
             traceback.print_exc()
