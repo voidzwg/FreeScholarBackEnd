@@ -11,7 +11,7 @@ import uuid
 
 
 class publication:
-
+    @staticmethod
     def GetWord(request):
         if request.method == 'POST':
             try:
@@ -37,6 +37,7 @@ class publication:
         else:
             return JsonResponse({'errno': '1'})
 
+    @staticmethod
     def search(request):
         if request.method == 'POST':
             try:
@@ -239,6 +240,7 @@ class publication:
         else:
             return JsonResponse({'errno': '1'})
 
+    @staticmethod
     def HotPaper(request):
         if request.method == 'POST':
             try:
@@ -260,6 +262,7 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def HotWord(request):
         if request.method == 'POST':
             try:
@@ -278,35 +281,27 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def ReadPaper(request):
         if request.method == 'POST':
+            login = True
             fail, payload = Authentication.authentication(request.META)
             if fail:
-                return JsonResponse(payload)
-            try:
-                user_id = payload.get('id')
-                user = User.objects.get(field_id=user_id)
-            except User.DoesNotExist:
-                return JsonResponse({'errno': 1, 'msg': "用户不存在"})
-        try:
+                login = False
+                uid = payload.get('id')
+            else:
+                uid = None
             data = request.body.decode()
             data_body = json.loads(data)
             paper_id = data_body.get('paper_id')
             paper_name = data_body.get('paper_name')
-            viewHistory = Viewhistory()
-            viewHistory.user = user
-            viewHistory.paper_id = paper_id
-            viewHistory.time = datetime.datetime.now()
-            viewHistory.save()
+            if login:
+                vh = Viewhistory(user_id=uid, paper_id=paper_id, time=datetime.datetime.now())
+                vh.save()
             paper = Paper.objects.filter(paper_id=paper_id).first()
             comments = Comment.objects.filter(paper_id=paper_id)
             comment_result = []
             for comment in comments:
-                like1=Like1.objects.filter(user=user,comment=comment).first()
-                if like1 is None:
-                    isliked=False
-                else:
-                    isliked=True
                 tmp = {
                     "comment_id":comment.field_id,
                     "user_id":comment.user.field_id,
@@ -314,8 +309,14 @@ class publication:
                     "username": comment.user.name,
                     "text": comment.content,
                     "likecount":comment.count,
-                    "liked":isliked
                 }
+                if login:
+                    like1 = Like1.objects.filter(user_id=uid, comment=comment).first()
+                    if like1 is None:
+                        isliked = False
+                    else:
+                        isliked = True
+                    tmp['liked'] = isliked
                 comment_result.append(tmp)
             if paper is None:
                 paper = Paper()
@@ -330,22 +331,29 @@ class publication:
                 paper.read_count += 1
                 paper.save()
                 paper.save_paper_data()
-            like = Like.objects.filter(user=user,paper=paper).first()
-            if like is None:
-                isLiked1=False
-            else:
-                isLiked1=True
-            collect=Collection.objects.filter(user=user,paper_id=paper_id).first()
-            if collect is None:
-                isCollected=False
-            else:
-                isCollected=True
-            return JsonResponse(
-                {'like_count': paper.like_count, 'isLiked':isLiked1,'read_count': paper.read_count, 'collect_count': paper.collect_count,'isCollected':isCollected,
-                 'comment': comment_result})
-        except Exception as e:
-            traceback.print_exc()
 
+            json_data = {
+                'like_count': paper.like_count,
+                'read_count': paper.read_count,
+                'collect_count': paper.collect_count,
+                'comment': comment_result
+            }
+            if login:
+                like = Like.objects.filter(user_id=uid, paper=paper).first()
+                if like is None:
+                    isLiked1 = False
+                else:
+                    isLiked1 = True
+                collect = Collection.objects.filter(user_id=uid, paper_id=paper_id).first()
+                if collect is None:
+                    isCollected = False
+                else:
+                    isCollected = True
+                json_data['isLiked'] = isLiked1
+                json_data['isCollected'] = isCollected
+            return JsonResponse(json_data)
+
+    @staticmethod
     def MakeComment(request):
         if request.method == 'POST':
             fail, payload = Authentication.authentication(request.META)
@@ -377,6 +385,7 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def LikeComment(request):
         if request.method == 'POST':
             fail, payload = Authentication.authentication(request.META)
@@ -390,10 +399,10 @@ class publication:
             try:
                 data_body = request.POST
                 comment_id = data_body.get('comment_id')
-                comment=Comment.objects.filter(field_id=comment_id).first()
+                comment = Comment.objects.filter(field_id=comment_id).first()
                 if comment is None:
                     return JsonResponse({'error': 0, 'message': "评论不存在"})
-                like1=Like1.objects.filter(user=user,comment=comment).first()
+                like1 = Like1.objects.filter(user=user, comment=comment).first()
                 if like1 is None:
                     like11 = Like1()
                     like11.comment = comment
@@ -402,17 +411,15 @@ class publication:
                     like11.save()
                     comment.count += 1
                     comment.save()
-                    return JsonResponse({'msg':"点赞成功"})
+                    return JsonResponse({'msg': "点赞成功"})
                 else:
-                    like1.delete()
-                    comment.count -=1
-                    comment.save()
-                    return JsonResponse({'msg':"取消点赞成功"})
+                    return JsonResponse({'msg': "你已经赞过了"})
             except Exception as e:
                 traceback.print_exc()
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def LikePaper(request):
         if request.method == 'POST':
             fail, payload = Authentication.authentication(request.META)
@@ -429,11 +436,11 @@ class publication:
                 paper = Paper.objects.filter(paper_id=paper_id).first()
                 if paper is None:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
-                like = Like.objects.filter(user=user,paper=paper).first()
+                like = Like.objects.filter(user=user, paper=paper).first()
                 if like is None:
-                    like_1=Like()
-                    like_1.paper=paper
-                    like_1.user=user
+                    like_1 = Like()
+                    like_1.paper = paper
+                    like_1.user = user
                     paper.like_count += 1
                     paper.save_paper_data()
                     paper.save()
@@ -441,7 +448,7 @@ class publication:
                     return JsonResponse({'message': "点赞成功"})
                 else:
                     like.delete()
-                    paper.like_count-=1
+                    paper.like_count -= 1
                     paper.save()
                     paper.save_paper_data()
                     return JsonResponse({'message': "取消点赞成功"})
@@ -450,7 +457,7 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
-
+    @staticmethod
     def CollectPaper(request):
         if request.method == 'POST':
             fail, payload = Authentication.authentication(request.META)
@@ -471,9 +478,9 @@ class publication:
                     return JsonResponse({'error': 0, 'message': "文章不存在"})
                 elif favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
-                collection = Collection.objects.filter(user=user,paper_id=paper_id,favorites=favorite).first()
+                collection = Collection.objects.filter(user=user, paper_id=paper_id, favorites=favorite).first()
                 if collection is not None:
-                    return JsonResponse({'error':0,'msg':"收藏关系已存在"})
+                    return JsonResponse({'error': 0, 'msg': "收藏关系已存在"})
                 else:
                     paper.collect_count += 1
                     paper.save_paper_data()
@@ -492,6 +499,7 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def UnCollectPaper(request):
         if request.method == 'POST':
             fail, payload = Authentication.authentication(request.META)
@@ -512,7 +520,7 @@ class publication:
                 favorite = Favorites.objects.filter(field_id=favorites_id).first()
                 if favorite is None:
                     return JsonResponse({'error': 0, 'message': "收藏夹不存在"})
-                collection = Collection.objects.filter(user=user, paper_id=paper_id,favorites=favorite).first()
+                collection = Collection.objects.filter(user=user, paper_id=paper_id, favorites=favorite).first()
                 if collection is None:
                     return JsonResponse({'error': 0, 'message': "不具备收藏关系"})
                 if favorite is None:
@@ -530,6 +538,7 @@ class publication:
         else:
             return JsonResponse({'error': 0, 'message': "请求方式错误"})
 
+    @staticmethod
     def search_by_id_list(idList):
         body = {
             "query": {
@@ -544,6 +553,7 @@ class publication:
         hits = resp['hits']['hits']
         return hits
 
+    @staticmethod
     def getVenueListByIdList(request):
         try:
             if request.method == 'POST':
@@ -563,6 +573,7 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    @staticmethod
     def getKeyListByIdList(request):
         try:
             if request.method == 'POST':
@@ -582,6 +593,7 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    @staticmethod
     def getOrgListByIdList(request):
         try:
             if request.method == 'POST':
@@ -604,6 +616,7 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    @staticmethod
     def getPaperByIdList(request):
         try:
             if request.method == 'POST':
@@ -619,6 +632,7 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    @staticmethod
     def getPaperById(request):
         try:
             if request.method == 'POST':
@@ -639,6 +653,7 @@ class publication:
         except Exception as e:
             traceback.print_exc()
 
+    @staticmethod
     def addPub(request):
         try:
             if request.method == 'POST':
