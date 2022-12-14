@@ -16,34 +16,12 @@ from serialization.views import Serialization
 
 @csrf_exempt
 def test(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
-            data = []
-            pid = []
-            favorites_id = request.GET['favorites_id']
-            try:
-                res = Collection.objects.filter(favorites=favorites_id)
-            except Collection.DoesNotExist:
-                res = None
-            for i in range(len(res)):
-                pid.append(res[i].paper_id)
-            papers = publication.search_by_id_list(pid)
-            for i in range(len(res)):
-                try:
-                    col = Paper.objects.get(paper_id=res[i].paper_id)
-                except Paper.DoesNotExist:
-                    col = None
-                    like_count = 0
-                    read_count = 0
-                    collect_count = 0
-                if col is not None:
-                    like_count = col.like_count
-                    read_count = col.read_count
-                    collect_count = col.collect_count
-                data1 = {'like_count': like_count, 'read_count': read_count, 'collect_count': collect_count,
-                         'paper': papers[i]}
-                data.append(data1)
-            return JsonResponse(data, safe=False)
+            req = simplejson.loads(request.body)
+            _ids = req['history_id']
+            Viewhistory.objects.filter(field_id__in=_ids).delete()
+            return JsonResponse({'errno': 0, 'msg': "删除成功"})
         except Exception as e:
             traceback.print_exc()
     else:
@@ -1150,6 +1128,16 @@ def deleteFavorites(request):
             Favorites.objects.get(field_id=favorites_id).delete()
         except Favorites.DoesNotExist:
             return JsonResponse({'errno': 1, 'msg': "收藏夹不存在"})
+        return JsonResponse({'errno': 0, 'msg': "删除成功"})
+    else:
+        return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
+
+
+def batchDeleteHistory(request):
+    if request.method == 'POST':
+        req = simplejson.loads(request.body)
+        _ids = req['history_id']
+        Viewhistory.objects.filter(field_id__in=_ids).delete()
         return JsonResponse({'errno': 0, 'msg': "删除成功"})
     else:
         return JsonResponse({'errno': 1, 'msg': "请求方式错误"})
