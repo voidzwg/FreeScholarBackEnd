@@ -388,7 +388,7 @@ def admit_code(request):
         return JsonResponse({'result': 0, 'msg': "邮箱不合法"})
     now_date = datetime.datetime.now()
     admit_1=Scholaradmit.objects.filter(user_id=payload.get('id')).first()
-    if admit_1 is None:
+    if admit_1 is not None:
         return JsonResponse({'error':1,'msg':"请勿重复申请"})
     user=User.objects.filter(field_id=payload.get('id')).first()
     scholar=Scholar.objects.filter(user=user).first()
