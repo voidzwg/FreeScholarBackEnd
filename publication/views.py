@@ -719,7 +719,7 @@ class publication:
                                 }
                         },
                         "size":4
-                        }
+                    }
                     recommend = client.search(index='paper', body=body)
                     data = []
                     for h in recommend['hits']['hits']:
@@ -730,5 +730,16 @@ class publication:
                     return JsonResponse({"error": 2, "msg": "出错"})
             else:
                 return JsonResponse({'errno': 1})
+        except Exception as e:
+            traceback.print_exc()
+
+    def count(request):
+        try:
+            if request.method == 'GET':
+                count = client.count(index='paper')
+                return JsonResponse({"paper_count":count['count']})
+            else:
+                return JsonResponse({'errno': 1})
+
         except Exception as e:
             traceback.print_exc()

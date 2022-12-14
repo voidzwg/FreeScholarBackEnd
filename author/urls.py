@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('getAuthor/', views.author.getAuthor),
+    path('count/', views.author.count),
 ]

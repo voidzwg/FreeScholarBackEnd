@@ -128,3 +128,14 @@ class author:
                 traceback.print_exc()
         else:
             return JsonResponse({'err': '1', 'msg': 'request method error! post expected.'})
+
+    def count(request):
+        try:
+            if request.method == 'GET':
+                count = client.count(index='author')
+                return JsonResponse({"paper_count":count['count']})
+            else:
+                return JsonResponse({'errno': 1})
+
+        except Exception as e:
+            traceback.print_exc()
