@@ -308,9 +308,12 @@ class publication:
                 else:
                     isliked=True
                 tmp = {
+                    "comment_id":comment.field_id,
+                    "user_id":comment.user.field_id,
                     "avatar": comment.user.avatar,
                     "username": comment.user.name,
                     "text": comment.content,
+                    "likecount":comment.count,
                     "liked":isliked
                 }
                 comment_result.append(tmp)
