@@ -18,5 +18,6 @@ urlpatterns = [
     path('UnCollectPaper/',views.publication.UnCollectPaper),
     path('MakeComment/',views.publication.MakeComment),
     path('LikeComment/',views.publication.LikeComment),
+    path('recommend/', views.publication.recommend),
 ]
 

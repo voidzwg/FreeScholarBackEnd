@@ -70,13 +70,13 @@ class author:
                                                 }},
 
                                                 {"term": {
-                                                    "authors.id": a['id']
+                                                     "authors.name.keyword": a['name']
                                                 }}
                                             ]
                                         }
                                     }
                                 }
-                                count = client.count(index='paper',body=body)
+                                count = client.count(index='paper', body=body)
                                 item = {
                                     'id':a['id'],
                                     'name':a['name'],
@@ -107,6 +107,9 @@ class author:
                                     'count':count['count'],
                                 }
                                 authors.append(item)
+                    for i in authors:
+                        if i['count'] == 0:
+                            i['count'] = 1
                     return JsonResponse({'data':data,'coworkers':authors})
 
                 else:
@@ -115,3 +118,13 @@ class author:
                 return JsonResponse({'err':'1','msg':'request method error! post expected.'})
         except Exception as e:
             traceback.print_exc()
+
+    def search(request):
+        if request.method == 'POST':
+            try:
+                name= request.POST.get('name')
+
+            except Exception as e:
+                traceback.print_exc()
+        else:
+            return JsonResponse({'err': '1', 'msg': 'request method error! post expected.'})

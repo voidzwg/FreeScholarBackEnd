@@ -28,6 +28,7 @@ class Collection(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING)
     paper_id = models.TextField(blank=True, null=True)
     time = models.DateTimeField(blank=True, null=True)
+    favorites = models.ForeignKey('Favorites', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -91,6 +92,19 @@ class Complainpaper(models.Model):
     class Meta:
         managed = False
         db_table = 'ComplainPaper'
+
+
+class Favorites(models.Model):
+    field_id = models.AutoField(db_column='_id', primary_key=True)  # Field renamed because it started with '_'.
+    title = models.CharField(max_length=255, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
+    count = models.IntegerField(blank=True, null=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Favorites'
 
 
 class Field(models.Model):
