@@ -21,8 +21,18 @@ class GetBaseInfo(View):
             return JsonResponse({'errno': 1, 'msg': "学者身份未认领"})
         scholar = scholar[0]
         user = scholar.user
+        # json_data = {
+        #     "Hotpoint": scholar.count * 347 + 443 * (scholar.hot_index + 1) + 666,
+        #     'scholar_id': scholar.field_id,
+        #     'user_id': user.field_id,
+        #     "bio": user.bio,
+        #     "name": user.name,
+        #     "visitors": scholar.count,
+        #     'bgimg': scholar.avatar,
+        #     'papers': scholar.paper_show
+        # }
         json_data = {
-            "Hotpoint": scholar.count * 347 + 443 * (scholar.hot_index + 1) + 666,
+            "Hotpoint": scholar.count * 347 + 443 * (scholar.count + 1) + 666,
             'scholar_id': scholar.field_id,
             'user_id': user.field_id,
             "bio": user.bio,
